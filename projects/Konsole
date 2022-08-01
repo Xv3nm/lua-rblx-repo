@@ -248,15 +248,28 @@ function commands.exec(command)
 				commands[cmd].func(unpack(args));
 				
 
-			elseif #args < #commands[cmd].args and not string.find(v,".optional") and not args[i] == nil then
+			elseif #args < #commands[cmd].args then
+			    for i,v in pairs(commands[cmd].args) do
+    				if args[i] == nil and string.find(v,".optional") then
+    					if args[i] == args[#args] then
+    					    commands.verbose({
+            					"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd),
+            					tostring(cmd).." successfully executed!",
+            				})
+    						commands[cmd].func();
+    						
+    						return true;
+    					end
+    				end
+    			end
 				commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd),tostring(cmd).." executed with to little arguments."})
 				return true;
 			else
-				commands[cmd].func();
-				commands.verbose({
+			    commands.verbose({
 					"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd),
 					tostring(cmd).." successfully executed!",
 				})
+				commands[cmd].func();
 			end
 
 			return true
