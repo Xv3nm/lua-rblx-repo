@@ -1,0 +1,884 @@
+local data = ... or {
+	{
+		["Commands"] = {
+			{"walkspeed",function(speed) Player.Character.Humanoid.WalkSpeed = speed; end,"value"},
+			{"jumppower",function(power) Player.Character.Humanoid.JumpPower = power; end,"value"},
+			{"fly",function(doFly,flySpeed)
+				local flySpeed = flySpeed or 1
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/Xv3nm/lua-rblx-repo/main/toggles/fly"))({doFly,flySpeed}); 
+			end,"bool","value.optional"},
+			{"clear",function() VerboseText.Text = "\n"; Line.Position = UDim2.new(0.005, 0, 0.005, 0); Lines = {}; CLIScroll.CanvasSize = UDim2.new(0,0,2,0); end},
+		}
+	},
+	"Semicolon"
+}
+
+if not ... then print('[#] Using default commands.') end
+
+--// GameLoaded Check
+repeat
+    wait()
+until game:IsLoaded()
+
+--// Variables
+local toggleUI = data[2] or "Semicolon"
+local Lines = {}
+local commands = {}
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local mouse = game.Players.LocalPlayer:GetMouse()
+local Pressing = false
+local CLIScreenGui = Instance.new("ScreenGui")
+local Blur = Instance.new("ImageLabel")
+local CLIScroll = Instance.new("ScrollingFrame")
+local Right = Instance.new("ImageLabel")
+local Bottom = Instance.new("ImageLabel")
+local Left = Instance.new("ImageLabel")
+local Top = Instance.new("ImageLabel")
+local Close = Instance.new("ImageButton")
+local Resize = Instance.new("ImageButton")
+local Minimize = Instance.new("ImageButton")
+local Title = Instance.new("TextLabel")
+local CLI = Instance.new("ImageButton")
+local Line = Instance.new("TextLabel")
+local CommandText = Instance.new("TextBox")
+local CommandTextFill = Instance.new("TextBox")
+local VerboseText = Instance.new("TextLabel")
+local oldPos
+local oldSize
+
+--// TopBar Early Variables
+local TopBar = game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame
+local Konsole = Instance.new("Frame")
+
+getgenv().alive = false
+
+--// Bypass Preload Async
+local old
+old = hookmetamethod(game, "__namecall", function(self, ...)
+	local method = getnamecallmethod()
+	if self == ContentProvider and (method == "PreloadAsync" or method == "preloadAsync") then
+		local args = {...}
+		if type(args[1]) ~= "table" or type(args[2]) ~= "function" then
+			return old(self, ...)
+		end
+
+		local err
+		task.spawn(function()
+			setnamecallmethod(method) --different thread, different namecall method
+			local s,e = pcall(old, self, args[1])
+			if not s and e then
+				err = e
+			end
+		end)
+
+		if err then
+			return old(self, args[1])
+		end
+
+		args[1] = FilterTable(args[1])
+		setnamecallmethod(method)
+		return old(self, args[1], args[2])
+	end
+	return old(self, ...)
+end)
+
+--// Destroy Previous Instances
+
+if game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame:FindFirstChild("Konsole") then
+	game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame.Konsole:Destroy()
+end
+
+--// Detect Executor
+local function GetExecutor()
+    local exploit =
+    (syn and syn.protect_gui and not getexecutorname and not is_sirhurt_closure and not pebc_execute and "Synapse X") or
+    (getexecutorname and identifyexecutor and gethui and "ScriptWare") or
+    (secure_load and "Sentinel") or
+    (is_sirhurt_closure and "Sirhurt") or
+    (pebc_execute and "ProtoSmasher") or
+    (KRNL_LOADED and "Krnl") or
+    (WrapGlobal and "WeAreDevs") or
+    (isvm and "Proxo") or
+    (shadow_env and "Shadow") or
+    (jit and "EasyExploits") or
+    (getreg()['CalamariLuaEnv'] and "Calamari") or
+    (unit and "Unit") or
+    (IS_VIVA_LOADED and "VIVA") or
+    (IS_COCO_LOADED and "Coco") or
+    ("Undetectable")
+    return exploit
+end
+
+if GetExecutor() == "Undetectable" then
+    warn("[!] Unable to detect executor, please report this to the developer.")
+elseif GetExecutor() == "ScriptWare" or gethui then
+    warn("[!] Using gethui!")
+    CLIScreenGui.Parent = gethui()
+    CLIScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+elseif GetExecutor() == "Synapse X" or protect_gui then
+    warn("[!] Using protect_gui!")
+    syn.protect_gui(CLIScreenGui) 
+    CLIScreenGui.Parent = game:GetService("CoreGui")
+    CLIScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+else
+    warn("[!] " .. GetExecutor() .. " detected, Custom Gui Protection.")
+    coroutine.wrap(function()
+        local charset = {"a","A","b","B","c","C","d","D","e","E","f","F","g","G","h","H","i","I","j","J","k","K","l","L","m","M","n","N","o","O","p","P","q","Q","r","R","s","S","t","T","u","U","v","V","w","W","x","X","y","Y","z","Z",1,2,3,4,5,6,7,8,9,0}
+        CLIScreenGui.Name = tostring(charset[math.random(1,#charset)])
+        for i = 1, math.random(7,30), 1 do
+            local char = tostring(charset[math.random(1,#charset)])
+            CLIScreenGui.Name = CLIScreenGui.Name..char
+        end
+    end)()
+    CLIScreenGui.Parent = game:GetService("CoreGui")
+    CLIScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+end
+
+--// Initialization
+function commands.Initialize(data)
+    for group, cmdCache in next, data do
+		for _, commandData in next, cmdCache do
+			local cmd = commandData[1];
+			local func = commandData[2];
+			local args = {};
+			for i,v in pairs(commandData) do
+				if i > 2 then
+					table.insert(args, v);
+				end
+			end
+
+			local cmdPass = true;
+			local funcPass = true;
+			local invString = "";
+
+			if typeof(func) == "function" then
+				commands[cmd] = {}
+				commands[cmd].func = func;
+				commands[cmd].args = args;
+			else
+				funcPass = false
+			end
+			
+			if typeof(cmd) ~= "string" then
+				cmdPass = false
+			end
+
+			if not cmdPass then
+				warn("Unexecutable command detected! Command '"..tostring(cmd).."' is not a string!")
+			end
+			
+			if not funcPass then
+				commands[cmd] = function() warn("Invalid Function; Please correct syntax and re-execute!") end
+			end
+		end
+	end
+end
+
+--// Verbose
+
+VerboseText.RichText = true
+
+function commands.verbose(data)
+	if not string.find(data[1],"clear") then
+		for i,v in pairs(data) do
+			table.insert(Lines,v)
+		end
+		local maths = #Lines * 15.96
+		Line.Position = UDim2.new(0.005, 0, 0.005, maths)
+		
+		VerboseText.Text = VerboseText.Text..data[1].."\n"..data[2].."\n"
+	end
+end
+
+--// Exec
+
+function commands.exec(command)
+	local command = command:split(" ");
+	local args = {};
+
+	for i,v in pairs(command) do
+		if i > 1 then
+			table.insert(args, v);
+		end
+	end
+
+	
+	for cmd,_ in next, commands do
+		if cmd == command[1] then
+			if #args > 0 then
+				if #args > #commands[cmd].args then
+					commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd).." "..tostring(unpack(args)),tostring(cmd).." executed with to many arguments."})
+					return true;
+				end
+
+				for i,v in pairs(commands[cmd].args) do
+				    if string.find(v,".optional") and args[i] == nil then
+						wait()
+					else
+						if v == "string" then
+							if tonumber(args[i]) then
+								commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd).." "..tostring(unpack(args)),"Argument "..i.." is not a string."})
+								return true;
+							end
+						elseif v == "value" then
+							if not tonumber(args[i]) then
+								commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd).." "..tostring(unpack(args)),"Argument "..i.." is not a value."})
+								return true;
+							end
+						elseif v == "bool" then
+
+							if args[i] == "true" then
+								args[i] = true
+							elseif args[i] == "false" then
+								args[i] = false
+							else
+								commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd).." "..tostring(unpack(args)),"Argument "..i.." is not a bool."})
+								return true;
+							end
+						end
+					end
+				end
+
+				commands.verbose({
+					"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd).." "..tostring(unpack(args)),
+					tostring(cmd).." successfully executed!",
+				})
+				commands[cmd].func(unpack(args));
+				
+
+			elseif #args < #commands[cmd].args then
+				commands.verbose({"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd),tostring(cmd).." executed with to little arguments."})
+				return true;
+			else
+				commands[cmd].func();
+				commands.verbose({
+					"<font color=\"#FFA500\">"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..tostring(cmd),
+					tostring(cmd).." successfully executed!",
+				})
+			end
+
+			return true
+		end
+	end
+	return false
+end
+
+wait();getgenv().alive = true
+
+function commands.destroycli()
+	CLIScreenGui:Destroy();
+	Konsole:Destroy();
+	getgenv().alive = false;
+end
+
+--// Commands
+
+commands.Initialize(data[1])
+
+--// Refresh
+
+coroutine.wrap(function()
+	while wait() do
+		if not getgenv().alive then
+			commands.destroycli();
+			break
+		end
+	end
+end)()
+
+--// CLI
+
+Blur.Name = "Blur"
+Blur.Parent = CLIScreenGui
+Blur.AnchorPoint = Vector2.new(0.5, 0.5)
+Blur.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Blur.BackgroundTransparency = 1.000
+Blur.ImageTransparency = 0.5
+Blur.BorderSizePixel = 0
+Blur.Position = UDim2.new(0.5, 0, 0.5, 0)
+Blur.Size = UDim2.new(0.550000012, 0, 0.5, 0)
+Blur.Image = "rbxassetid://10433987164"
+Blur.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Blur.ScaleType = Enum.ScaleType.Slice
+Blur.SliceScale = 0.000
+
+CLIScroll.Name = "CLIScroll"
+CLIScroll.Parent = CLIScreenGui
+CLIScroll.AnchorPoint = Vector2.new(0.5, 0.5)
+CLIScroll.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+CLIScroll.BackgroundTransparency = 1.000
+CLIScroll.BorderSizePixel = 0
+CLIScroll.Position = UDim2.new(0.5, 0, 0.5, 0)
+CLIScroll.Size = UDim2.new(0.550000012, 0, 0.5, 0)
+CLIScroll.ScrollBarThickness = 4
+CLIScroll.TopImage = ""
+CLIScroll.BottomImage = ""
+CLIScroll.CanvasSize = UDim2.new(0,0,2,0)
+
+coroutine.wrap(function()
+    while wait() and getgenv().alive do
+        if #Lines >= 126 then
+            local off = #Lines - 125
+            off = off * 15.96
+            CLIScroll.CanvasSize = UDim2.new(0,0,2,off)
+        end
+    end
+end)()
+
+Right.Name = "Right"
+Right.Parent = Blur
+Right.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Right.BackgroundTransparency = 1.000
+Right.Position = UDim2.new(0.9997, 0, -0.05, 0)
+Right.Size = UDim2.new(0.0045, 0, 1.06033027, 0)
+Right.Image = "rbxassetid://3570695787"
+Right.ImageColor3 = Color3.fromRGB(12, 14, 20)
+Right.ScaleType = Enum.ScaleType.Slice
+Right.SliceCenter = Rect.new(100, 100, 100, 100)
+Right.SliceScale = 0.120
+
+Bottom.Name = "Bottom"
+Bottom.Parent = Blur
+Bottom.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Bottom.BackgroundTransparency = 1.000
+Bottom.Position = UDim2.new(-0.00448653381, 0, 1, 0)
+Bottom.Size = UDim2.new(1.00848651, 0, 0.0116662867, 0)
+Bottom.Image = "rbxassetid://3570695787"
+Bottom.ImageColor3 = Color3.fromRGB(12, 14, 20)
+Bottom.ScaleType = Enum.ScaleType.Slice
+Bottom.SliceCenter = Rect.new(100, 100, 100, 100)
+Bottom.SliceScale = 0.120
+
+Left.Name = "Left"
+Left.Parent = Blur
+Left.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Left.BackgroundTransparency = 1.000
+Left.Position = UDim2.new(-0.00448656827, 0, -0.0490082763, 0)
+Left.Size = UDim2.new(0.0045, 0, 1.06067479, 0)
+Left.Image = "rbxassetid://3570695787"
+Left.ImageColor3 = Color3.fromRGB(12, 14, 20)
+Left.ScaleType = Enum.ScaleType.Slice
+Left.SliceCenter = Rect.new(100, 100, 100, 100)
+Left.SliceScale = 0.120
+
+Top.Name = "Top"
+Top.Parent = Blur
+Top.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Top.BackgroundTransparency = 1.000
+Top.Position = UDim2.new(-0.00448656827, 0, -0.0676779449, 0)
+Top.Size = UDim2.new(1.00848651, 0, 0.0676662847, 0)
+Top.Image = "rbxassetid://3570695787"
+Top.ImageColor3 = Color3.fromRGB(12, 14, 20)
+Top.ScaleType = Enum.ScaleType.Slice
+Top.SliceCenter = Rect.new(100, 100, 100, 100)
+Top.SliceScale = 0.040
+
+Close.Name = "Close"
+Close.Parent = Top
+Close.Active = false
+Close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Close.BackgroundTransparency = 1.000
+Close.BorderSizePixel = 0
+Close.AnchorPoint = Vector2.new(0,0.5)
+Close.Position = UDim2.new(0.00605, 0, 0.5, 0)
+Close.Selectable = false
+Close.Size = UDim2.new(0.014, 0, 0.4, 0)
+Close.Image = "rbxassetid://6827389541"
+Close.ImageColor3 = Color3.fromRGB(255, 71, 64)
+
+Close.MouseButton1Click:connect(function()
+	commands.destroycli();
+end)
+
+Resize.Name = "Resize"
+Resize.Parent = Top
+Resize.Active = false
+Resize.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Resize.BackgroundTransparency = 1.000
+Resize.BorderSizePixel = 0
+Resize.AnchorPoint = Vector2.new(0,0.5)
+Resize.Position = UDim2.new(0.034, 0, 0.5, 0)
+Resize.Selectable = false
+Resize.Size = UDim2.new(0.014, 0, 0.4, 0)
+Resize.Image = "rbxassetid://6827389541"
+Resize.ImageColor3 = Color3.fromRGB(182, 0, 234)
+
+Minimize.Name = "Minimize"
+Minimize.Parent = Top
+Minimize.Active = false
+Minimize.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Minimize.BackgroundTransparency = 1.000
+Minimize.BorderSizePixel = 0
+Minimize.AnchorPoint = Vector2.new(0,0.5)
+Minimize.Position = UDim2.new(0.062, 0, 0.5, 0)
+Minimize.Selectable = false
+Minimize.Size = UDim2.new(0.014, 0, 0.4, 0)
+Minimize.Image = "rbxassetid://6827389541"
+Minimize.ImageColor3 = Color3.fromRGB(253, 205, 26)
+
+Title.Name = "Title"
+Title.Parent = Top
+Title.AnchorPoint = Vector2.new(0.5, 0.5)
+Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1.000
+Title.BorderSizePixel = 0
+Title.Position = UDim2.new(0.5, 0, 0.5, 0)
+Title.Size = UDim2.new(0.2, 0, 0.5, 0)
+Title.Font = Enum.Font.Ubuntu
+Title.Text = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 15.000
+Title.TextScaled = true
+
+CLI.Name = "CLI"
+CLI.Parent = CLIScroll
+CLI.Active = false
+CLI.AnchorPoint = Vector2.new(0.5, 0.5)
+CLI.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+CLI.BackgroundTransparency = 0.700
+CLI.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CLI.BorderSizePixel = 0
+CLI.ClipsDescendants = true
+CLI.Position = UDim2.new(0.5, 0, 0.5, 0)
+CLI.Selectable = false
+CLI.Size = UDim2.new(1, 0, 1, 0)
+CLI.AutoButtonColor = false
+
+Line.Name = "Line"
+Line.Parent = CLI
+Line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Line.BackgroundTransparency = 1.000
+Line.BorderSizePixel = 0
+Line.Position = UDim2.new(0.005, 0, 0.005, 0)
+Line.Size = UDim2.new(0.135213986, 0, 0.065, 0)
+Line.Font = Enum.Font.Ubuntu
+Line.Text = "<font color=\"#FFA500\">userid@exploit</font>: ~$"
+Line.TextColor3 = Color3.fromRGB(255, 255, 255)
+Line.TextSize = 14.000
+Line.RichText = true
+Line.LineHeight = 1.2
+
+CommandText.Name = "CommandText"
+CommandText.Parent = Line
+CommandText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CommandText.BackgroundTransparency = 1.000
+CommandText.BorderSizePixel = 0
+CommandText.Position = UDim2.new(1.02999997, 0, 0.0359999985, 0)
+CommandText.Size = UDim2.new(6.29570436, 0, 0.900000036, 0)
+CommandText.ClearTextOnFocus = false
+CommandText.Font = Enum.Font.Ubuntu
+CommandText.Text = ""
+CommandText.TextColor3 = Color3.fromRGB(225, 255, 225)
+CommandText.TextSize = 14.000
+CommandText.TextWrapped = true
+CommandText.TextXAlignment = Enum.TextXAlignment.Left
+CommandText.ZIndex = 2
+
+CommandTextFill.Name = "CommandTextFill"
+CommandTextFill.Parent = Line
+CommandTextFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CommandTextFill.BackgroundTransparency = 1.000
+CommandTextFill.BorderSizePixel = 0
+CommandTextFill.Position = UDim2.new(1.02999997, 0, 0.0359999985, 0)
+CommandTextFill.Size = UDim2.new(6.29570436, 0, 0.900000036, 0)
+CommandTextFill.ClearTextOnFocus = false
+CommandTextFill.Font = Enum.Font.Ubuntu
+CommandTextFill.Text = ""
+CommandTextFill.TextColor3 = Color3.fromRGB(200, 200, 200)
+CommandTextFill.TextSize = 14.000
+CommandTextFill.TextWrapped = true
+CommandTextFill.TextXAlignment = Enum.TextXAlignment.Left
+CommandTextFill.TextTransparency = 0.5
+CommandTextFill.TextEditable = false
+CommandTextFill.Selectable = false
+CommandTextFill.ZIndex = 1
+
+VerboseText.Name = "VerboseText"
+VerboseText.Parent = CLIScroll
+VerboseText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+VerboseText.BackgroundTransparency = 1.000
+VerboseText.BorderSizePixel = 0
+VerboseText.Position = UDim2.new(0.003, 0, -0.003, 0)
+VerboseText.Size = UDim2.new(0.995, 0, 1, 0)
+VerboseText.Font = Enum.Font.Ubuntu
+VerboseText.Text = "\n"
+VerboseText.TextColor3 = Color3.fromRGB(200, 200, 200)
+VerboseText.TextSize = 14.000
+VerboseText.TextXAlignment = Enum.TextXAlignment.Left
+VerboseText.TextYAlignment = Enum.TextYAlignment.Top
+VerboseText.ZIndex = 1
+VerboseText.LineHeight = 1.2
+
+local UIS = game:GetService("UserInputService")
+CompleteInput = UIS.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.Tab and CommandText:IsFocused() then
+		wait()
+		if CommandTextFill.Text == "" then
+			CommandText.Text = string.gsub(CommandText.Text, "\t", "")
+		else
+			CommandText.Text = CommandTextFill.Text
+			CommandText.Text = string.gsub(CommandText.Text, "\t", "")
+			
+			if string.find(CommandText.Text,"<") then
+    			CommandText.Text = string.gsub(string.split(CommandText.Text, "<")[1]," ","")
+			end
+		
+			CommandText.Text = string.gsub(CommandText.Text," ","")
+		end
+		CommandText:ReleaseFocus()
+		CommandText:CaptureFocus()
+	end
+
+	if CLIScreenGui == nil then CompleteInput:Disconnect() end
+end)
+
+--// TopBar Button
+local Background = Instance.new("ImageButton")
+local Icon = Instance.new("ImageLabel")
+local Overlay = Instance.new("ImageLabel")
+local ChatFix = game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame.ChatIcon
+local MenuFix = game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame.MenuIcon
+MenuFix.Size = UDim2.new(0,32,1,0)
+ChatFix.Size = UDim2.new(0,32,1,0)
+ChatFix.BadgeContainer.Visible = false
+
+Konsole.Name = "Konsole"
+Konsole.Parent = TopBar
+Konsole.AnchorPoint = Vector2.new(0, 0)
+Konsole.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Konsole.BackgroundColor3 = Color3.fromRGB(163, 162, 165)
+Konsole.BackgroundTransparency = 1
+Konsole.BorderSizePixel = 0
+Konsole.Position = UDim2.new(0, 0, 0, 0)
+Konsole.Size = UDim2.new(0, 32, 1, 0)
+Konsole.LayoutOrder = 2
+
+Background.Name = "Background"
+Background.Parent = Konsole
+Background.BackgroundTransparency = 1
+Background.BackgroundColor3 = Color3.fromRGB(163, 162, 165)
+Background.ImageTransparency = 0
+Background.AnchorPoint = Vector2.new(0, 1)
+Background.Position = UDim2.new(0, 0, 1, 0)
+Background.Size = UDim2.new(0, 32, 0, 32)
+Background.Image = "rbxasset://textures/ui/TopBar/iconBase.png"
+
+Icon.Name = "Icon"
+Icon.Parent = Background
+Icon.AnchorPoint = Vector2.new(0.5, 0.5)
+Icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+Icon.BackgroundTransparency = 1
+Icon.BackgroundColor3 = Color3.fromRGB(163, 162, 165)
+Icon.ImageTransparency = 0
+Icon.Size = UDim2.new(0, 24, 0, 24)
+Icon.ScaleType = "Stretch"
+Icon.TileSize = UDim2.new(1, 0, 1, 0)
+Icon.SliceScale = 1
+Icon.Image = "rbxassetid://10342370439"
+
+Overlay.Name = "Overlay"
+Overlay.Parent = Background
+Overlay.BackgroundTransparency = 1
+Overlay.BackgroundColor3 = Color3.fromRGB(163, 162, 165)
+Overlay.ImageColor3 = Color3.fromRGB(255,255,255)
+Overlay.ImageTransparency = 1
+Overlay.Size = UDim2.new(1, 0, 1, 0)
+Overlay.Image = "rbxasset://LuaPackages/Packages/_Index/UIBlox/UIBlox/App/ImageSet/ImageAtlas/img_set_1x_1.png"
+Overlay.ZIndex = 2
+Overlay.BorderSizePixel = 0
+Overlay.ImageRectSize = Vector2.new(17,17)
+Overlay.ImageRectOffset = Vector2.new(190,494)
+Overlay.SliceScale = 1
+Overlay.TileSize = UDim2.new(1,0,1,0)
+Overlay.ScaleType = "Slice"
+Overlay.SliceCenter = Rect.new(8,8,8,8)
+Overlay.MouseEnter:Connect(function()
+    Overlay.ImageTransparency = 0.9 
+end)
+Overlay.MouseLeave:Connect(function()
+    Overlay.ImageTransparency = 1
+end)
+
+local tweenInfo = TweenInfo.new(
+	0.525, -- Time
+	Enum.EasingStyle.Quint, -- EasingStyle
+	Enum.EasingDirection.InOut, -- EasingDirection
+	0, -- RepeatCount (when less than zero the tween will loop indefinitely)
+	false, -- Reverses (tween will reverse once reaching it's goal)
+	0 -- DelayTime
+)
+
+local tween = TweenService:Create(Blur, tweenInfo, {Position = UDim2.new(0.055,0,-0.03,0), Size = UDim2.new(0,0,0,0)})
+local tweenR = TweenService:Create(Blur, tweenInfo, {Position = UDim2.new(0.5,0,0.5,0), Size = UDim2.new(0.550000012, 0, 0.5, 0)})
+local tweenS = TweenService:Create(CLIScroll, tweenInfo, {Position = UDim2.new(0.055,0,-0.03,0), Size = UDim2.new(0,0,0,0)})
+local tweenRS = TweenService:Create(CLIScroll, tweenInfo, {Position = UDim2.new(0.5,0,0.5,0), Size = UDim2.new(0.550000012, 0, 0.5, 0)})
+
+Background.MouseButton1Click:Connect(function()
+	if CLIScreenGui.Enabled then
+		tween:Play()
+		tweenS:Play()
+		wait(0.2)
+		Title.Visible = false
+		Close.Visible = false
+		Resize.Visible = false
+		Minimize.Visible = false
+		Line.Visible = false
+		CommandText.Visible = false
+		CommandTextFill.Visible = false
+		VerboseText.Visible = false
+		wait(0.3)
+		CLIScreenGui.Enabled = not CLIScreenGui.Enabled
+	else
+		CLIScreenGui.Enabled = not CLIScreenGui.Enabled
+		tweenR:Play()
+		tweenRS:Play()
+		wait(0.2)
+		Title.Visible = true
+		Close.Visible = true
+		Resize.Visible = true
+		Minimize.Visible = true
+		Line.Visible = true
+		CommandText.Visible = true
+		CommandTextFill.Visible = true
+		VerboseText.Visible = true
+	end
+end)
+
+Minimize.MouseButton1Click:Connect(function()
+	if CLIScreenGui.Enabled then
+		tween:Play()
+		tweenS:Play()
+		wait(0.2)
+		Title.Visible = false
+		Close.Visible = false
+		Resize.Visible = false
+		Minimize.Visible = false
+		Line.Visible = false
+		CommandText.Visible = false
+		CommandTextFill.Visible = false
+		VerboseText.Visible = false
+		wait(0.3)
+		CLIScreenGui.Enabled = not CLIScreenGui.Enabled
+	else
+		CLIScreenGui.Enabled = not CLIScreenGui.Enabled
+		tweenR:Play()
+		tweenRS:Play()
+		wait(0.2)
+		Title.Visible = true
+		Close.Visible = true
+		Resize.Visible = true
+		Minimize.Visible = true
+		Line.Visible = true
+		CommandText.Visible = true
+		CommandTextFill.Visible = true
+		VerboseText.Visible = true
+	end
+end)
+
+Resize.MouseButton1Click:Connect(function()
+	Blur.Size = UDim2.new(0.550000012, 0, 0.5, 0)
+end)
+
+
+
+
+
+--// Scripts
+
+local minWidth, minHeight = 10, 10
+
+Line.TextXAlignment = Enum.TextXAlignment.Left
+Line.TextYAlignment = Enum.TextYAlignment.Top
+
+local function updateSize()
+	Line.Size = UDim2.new(
+		0, math.max(minWidth, Line.TextBounds.X),
+		0, math.max(minHeight, Line.TextBounds.Y)
+	)
+end
+
+Line:GetPropertyChangedSignal("TextBounds"):Connect(updateSize)
+
+Line.Text = "<font color='#FFA500'>"..Player.UserId.."@"..GetExecutor().."</font>: ~$"
+
+local minWidth, minHeight = 500, 50
+
+CommandText.TextXAlignment = Enum.TextXAlignment.Left
+CommandText.TextYAlignment = Enum.TextYAlignment.Top
+
+local function updateSize()
+	CommandText.Size = UDim2.new(
+		0, math.max(minWidth, CommandText.TextBounds.X),
+		0, math.max(minHeight, CommandText.TextBounds.Y)
+	)
+end
+
+
+CommandText:GetPropertyChangedSignal("TextBounds"):Connect(function()
+	updateSize()
+
+	if CommandText.Text == "" then
+		CommandTextFill.TextTransparency = 1
+		CommandTextFill.Text = ""
+		return
+	else
+		CommandTextFill.TextTransparency = 0.5
+	end
+
+	for command,_f in next, commands do
+		if string.sub(command,1,CommandText.Text:len()):match(CommandText.Text) then
+		    if CommandTextFill.Text == "Initialize" or CommandTextFill.Text == "exec" then
+        		CommandTextFill.Text = ""
+        		break
+		    end
+
+			local args = ""
+			for _,v in pairs(_f.args) do
+				if string.find(v,".optional") then
+					v = string.gsub(v,".optional","")
+				end
+
+				if v == "value" then
+					args = args.."<value> "
+				elseif v == "string" then
+					args = args.."<string> "
+				elseif v == "bool" then
+					args = args.."<bool> "
+				else
+					print('Unknown argument type: '..v)
+				end
+			end
+
+			CommandTextFill.Text = command.." "..args
+
+			break
+		else
+            CommandTextFill.Text = ""
+		end
+
+		
+	end
+end)
+CommandTextFill:GetPropertyChangedSignal("TextBounds"):Connect(function()
+	updateSize()
+end)
+
+--// Dragging CLI
+
+local UserInputService = game:GetService("UserInputService")
+local guiInset = game:GetService("GuiService"):GetGuiInset()
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	Blur.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	CLIScroll.Position = UDim2.new(startPosS.X.Scale, startPosS.X.Offset + delta.X, startPosS.Y.Scale, startPosS.Y.Offset + delta.Y)
+
+	local TopI = Top.AbsolutePosition + guiInset
+	local curX = TopI.X + Top.AbsoluteSize.X
+	local curY = TopI.Y + Top.AbsoluteSize.Y
+
+	if curX <= game.Workspace.CurrentCamera.ViewportSize.X then
+		Blur.Position = UDim2.new(Blur.Position.X.Scale,Blur.Position.X.Offset,Blur.Position.Y.Scale,Blur.Position.Y.Offset)
+	elseif TopI.X >= 0 then
+		Blur.Position = UDim2.new(Blur.Position.X.Scale,Blur.Position.X.Offset,Blur.Position.Y.Scale,Blur.Position.Y.Offset)
+	elseif curY <= game.Workspace.CurrentCamera.ViewportSize.Y then
+		Blur.Position = UDim2.new(Blur.Position.X.Scale,Blur.Position.X.Offset,Blur.Position.Y.Scale,Blur.Position.Y.Offset)
+	elseif TopI.Y >= 0 then
+		Blur.Position = UDim2.new(Blur.Position.X.Scale,Blur.Position.X.Offset,Blur.Position.Y.Scale,Blur.Position.Y.Offset)
+	end
+
+	if curX <= game.Workspace.CurrentCamera.ViewportSize.X then
+		CLIScroll.Position = UDim2.new(CLIScroll.Position.X.Scale,CLIScroll.Position.X.Offset,CLIScroll.Position.Y.Scale,CLIScroll.Position.Y.Offset)
+	elseif TopI.X >= 0 then
+		CLIScroll.Position = UDim2.new(CLIScroll.Position.X.Scale,CLIScroll.Position.X.Offset,CLIScroll.Position.Y.Scale,CLIScroll.Position.Y.Offset)
+	elseif curY <= game.Workspace.CurrentCamera.ViewportSize.Y then
+		CLIScroll.Position = UDim2.new(CLIScroll.Position.X.Scale,CLIScroll.Position.X.Offset,CLIScroll.Position.Y.Scale,CLIScroll.Position.Y.Offset)
+	elseif TopI.Y >= 0 then
+		CLIScroll.Position = UDim2.new(CLIScroll.Position.X.Scale,CLIScroll.Position.X.Offset,CLIScroll.Position.Y.Scale,CLIScroll.Position.Y.Offset)
+	end
+end
+
+Top.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Blur.Position
+		startPosS = CLIScroll.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+Top.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+
+--// CLI Keybind
+
+UserInputService.InputBegan:Connect(function(input)
+    if UserInputService:IsKeyDown(Enum.KeyCode[toggleUI]) and not CLIScreenGui.Enabled then
+        CLIScreenGui.Enabled = true
+		tweenR:Play()
+		tweenRS:Play()
+		wait(0.2)
+		Title.Visible = true
+		Close.Visible = true
+		Resize.Visible = true
+		Minimize.Visible = true
+		Line.Visible = true
+		CommandText.Visible = true
+		CommandTextFill.Visible = true
+		VerboseText.Visible = true
+		wait()
+		CommandText:CaptureFocus()
+    elseif UserInputService:IsKeyDown(Enum.KeyCode[toggleUI]) and CLIScreenGui.Enabled then
+        CommandText:ReleaseFocus()
+		tween:Play()
+		tweenS:Play()
+		wait(0.4)
+		Title.Visible = false
+		Close.Visible = false
+		Resize.Visible = false
+		Minimize.Visible = false
+		Line.Visible = false
+		CommandText.Visible = false
+		CommandTextFill.Visible = false
+		VerboseText.Visible = false
+		CLIScreenGui.Enabled = false
+	end
+end)
+
+CLI.MouseButton1Click:Connect(function()
+	CLI.Line.CommandText:CaptureFocus()
+end)
+
+CommandText.FocusLost:Connect(function(entered)
+	if entered then
+		if not commands.exec(CommandText.Text) then
+			commands.verbose({"<font color='#FFA500'>"..Player.UserId.."@"..GetExecutor().."</font>: ~$ "..CommandText.Text,"Command not found!"})
+		end
+		wait()
+		CommandText:CaptureFocus();
+		wait()
+		CommandText.Text = "";
+	end
+end)
