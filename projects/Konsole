@@ -7,7 +7,6 @@ local data = ... or {
 				local flySpeed = flySpeed or 1
 				loadstring(game:HttpGet("https://raw.githubusercontent.com/Xv3nm/lua-rblx-repo/main/toggles/fly"))({doFly,flySpeed}); 
 			end,"bool","value.optional"},
-			{"clear",function() VerboseText.Text = "\n"; Line.Position = UDim2.new(0.005, 0, 0.005, 0); Lines = {}; CLIScroll.CanvasSize = UDim2.new(0,0,2,0); end},
 		}
 	},
 	"Semicolon"
@@ -47,6 +46,13 @@ local CommandTextFill = Instance.new("TextBox")
 local VerboseText = Instance.new("TextLabel")
 local oldPos
 local oldSize
+
+function commands.clear()
+	VerboseText.Text = "\n";
+	Line.Position = UDim2.new(0.005, 0, 0.005, 0);
+	Lines = {};
+	CLIScroll.CanvasSize = UDim2.new(0,0,2,0);
+end
 
 --// TopBar Early Variables
 local TopBar = game:GetService("CoreGui").ThemeProvider.TopBarFrame.LeftFrame
@@ -175,6 +181,15 @@ function commands.Initialize(data)
 		end
 	end
 end
+
+commands["clear"] = {}
+commands["clear"].func = function()
+	VerboseText.Text = "\n";
+	Line.Position = UDim2.new(0.005, 0, 0.005, 0);
+	Lines = {};
+	CLIScroll.CanvasSize = UDim2.new(0,0,2,0);
+end
+commands["clear"].args = {}
 
 --// Verbose
 
