@@ -1,5 +1,6 @@
-local status = ...[1]
-local iyflyspeed = ...[2]
+local settings = ...
+getgenv().status = settings[1]
+local iyflyspeed = settings[2] or 1
 local Players = game:GetService("Players")
 local IYMouse = Players.LocalPlayer:GetMouse()
 
@@ -104,6 +105,9 @@ end
 
 if status then
     sFLY()
-else
-    NOFLY()
+    while wait() do
+        if not status then
+            NOFLY()
+        end
+    end
 end
