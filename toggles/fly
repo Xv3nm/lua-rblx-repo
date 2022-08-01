@@ -105,6 +105,7 @@ end
 
 if status then
     NOFLY()
+    wait()
     sFLY()
     while wait() do
         if not status then
