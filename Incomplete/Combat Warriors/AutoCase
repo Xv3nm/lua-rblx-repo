@@ -1,0 +1,36 @@
+getgenv().active = true
+
+while getgenv().active do
+    wait(10)
+    local enchantsCase = game:GetService("Players").LocalPlayer.PlayerGui.RoactUI.MainMenu.PagesScreenGuiContainer.StorePage_MainMenu.ItemFrameContainer.cases.Frame.enchantsCase.PurchaseButtonFrame.PurchaseButton.Button.ButtonDetection
+    local skinsCase = game:GetService("Players").LocalPlayer.PlayerGui.RoactUI.MainMenu.PagesScreenGuiContainer.StorePage_MainMenu.ItemFrameContainer.cases.Frame.skinsCase.PurchaseButtonFrame.PurchaseButton.Button.ButtonDetection
+    local killEffectsCase = game:GetService("Players").LocalPlayer.PlayerGui.RoactUI.MainMenu.PagesScreenGuiContainer.StorePage_MainMenu.ItemFrameContainer.cases.Frame.killEffectsCase.PurchaseButtonFrame.PurchaseButton.Button.ButtonDetection
+    
+    local events = {"MouseButton1Click", "MouseButton1Down", "MouseButton1Up", "Activated"}
+    for i,v in pairs(events) do
+        for i,v in pairs(getconnections(enchantsCase[v])) do
+            v:Fire()
+        end
+    end
+    
+    wait()
+    local confirmCase = game:GetService("Players").LocalPlayer.PlayerGui.RoactUI.CurrentPurchaseConfirmPrompt.PurchaseConfirmPrompt.Frame.ButtonFrameContainer.ConfirmButton.Button.ButtonDetection
+    
+    for i,v in pairs(events) do
+        for i,v in pairs(getconnections(confirmCase[v])) do
+            v:Fire()
+        end
+    end
+    
+    --[[
+    wait(0.2)
+    local skipCase = game:GetService("Players").LocalPlayer.PlayerGui.RoactUI.CurrentCaseUnboxingPrompt.CaseUnboxingPrompt.SkipButton.Button.ButtonDetection
+    
+    for i,v in pairs(getconnections(skipCase["MouseButton1Down"])) do
+        v:Fire()
+    end
+    for i,v in pairs(getconnections(skipCase["MouseButton1Up"])) do
+        v:Fire()
+    end
+    ]]
+end
