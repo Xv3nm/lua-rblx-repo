@@ -1,0 +1,24 @@
+getgenv().active = true
+
+getgenv().Material = "ForceField"
+
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Char = Player.Character
+local Hum = Char.Humanoid
+
+Hum:UnequipTools()
+local toolName = game:GetService("Workspace").PlayerCharacters.DanDamielMhm.ItemsAttached.Model.OriginalToolVO.Value
+
+repeat
+    wait(1)
+until not game:GetService("Workspace").PlayerCharacters.DanDamielMhm.ItemsAttached:FindFirstChild("Model")
+
+local onHand = game:GetService("Workspace").PlayerCharacters.DanDamielMhm
+onHand = onHand:FindFirstChild(tostring(toolName))
+
+for i,v in pairs(onHand.Contents.Handle.WeldParts:GetChildren()) do
+    if v:IsA("MeshPart") then
+        v.Material = getgenv().Material
+    end
+end
