@@ -1,0 +1,11 @@
+local WebSocket = syn.websocket.connect("ws://localhost:3000")
+
+WebSocket.OnMessage:Connect(function(Msg)
+    loadstring(Msg)()
+end)
+
+WebSocket.OnClose:Connect(function()
+    print('Client disconnected.')
+end)
+
+--// Assuming the server is hosted locally use this code to connect to websocket server. 
