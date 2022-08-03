@@ -1,0 +1,34 @@
+{
+    "manifest_version": 2,
+    "name": "Nova Execution",
+    "version": "1.0",
+    "description": "Adds an execution button to the Nova script page",
+    "icons": {
+        "16": "favicon.png",
+        "48": "favicon.png",
+        "128": "favicon.png"
+    },
+    "page_action": {
+        "default_icon": {
+            "16": "favicon.png",
+            "48": "favicon.png",
+            "128": "favicon.png"
+        }
+    },
+    "content_scripts": [{
+        "matches": ["https://scripts-nova.xyz/dashboard","https://scripts-nova.xyz/dashboard/"],
+        "js": ["handler.js"]
+    }],
+    "permissions": [
+        "http://*/*",
+        "https://*/*",
+        "http://scripts-nova.xyz/*/*",
+        "https://scripts-nova.xyz/*/*",
+        "http://scripts-nova.xyz/*",
+        "https://scripts-nova.xyz/*",
+        "http://scripts-nova.xyz/*/*/*",
+        "https://scripts-nova.xyz/*/*/*",
+        "http://scripts-nova.xyz/*/*/*/*",
+        "http://scripts-nova.xyz/*/*/*/*"
+    ]
+}
