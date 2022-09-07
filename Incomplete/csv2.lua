@@ -1,4 +1,4 @@
--- cocksex
+-- cs v2
 
 local Highlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/ovicular/Highlight/main/Main.lua"))()
 targetee = nil
@@ -8,9 +8,12 @@ mouse = game.Players.LocalPlayer:GetMouse()
 local TargetGUI = Instance.new("ScreenGui")
 local Target = Instance.new("TextBox")
 local Background = Instance.new("ImageLabel")
+local TargetHighlight = Instance.new("Highlight",game:GetService("CoreGui"))
+TargetHighlight.FillColor = Color3.new(255,0,0)
+TargetHighlight.OutlineColor = Color3.new(0,0,0)
 
 TargetGUI.Name = "TargetGUI"
-TargetGUI.Parent = game.CoreGui
+TargetGUI.Parent = game:GetService("CoreGui")
 
 Target.Name = "Target"
 Target.Parent = TargetGUI
@@ -83,12 +86,6 @@ function UnCtrlSelect(inputObject, gameProcessedEvent)
     end
 end
 
-handleHighlighting = {}
-
-function handleHighlighting:Check(char, name)
-    
-end
-
 game:GetService("UserInputService").InputBegan:connect(ShootGlocks)
 game:GetService("UserInputService").InputEnded:connect(UnShootGlocks)
 game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
@@ -105,20 +102,7 @@ game:GetService("RunService").Stepped:connect(
                     
                     local name = mouse.Target.Parent.Name
                     local char = mouse.Target.Parent
-                    
-                    highlightTable[name] = Highlight.create(char,{
-                    	FillColor = Color3.fromRGB(255,0,0),
-                    	OutlineColor = Color3.fromRGB(80,80,80),
-                    })
-                    coroutine.wrap(function()
-                        getgenv().prevTarget = name
-                        while wait() do
-                            if getgenv().curTarget ~= getgenv().prevTarget then
-                                highlightTable[getgenv().prevTarget]:Destroy()
-                                break
-                            end
-                        end
-                    end)()
+                    TargetHighlight.Adornee = mouse.Target.Parent
                 end
             end
         end
