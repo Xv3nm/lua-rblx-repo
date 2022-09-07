@@ -5,6 +5,29 @@ targetee = nil
 pleaseshoot = false
 mouse = game.Players.LocalPlayer:GetMouse()
 
+-- Anti Kick
+
+local plr = game:GetService("Players").LocalPlayer
+    local cclosure = syn_newcclosure or newcclosure or nil
+    if not cclosure or not hookmetamethod then
+        plr:Kick("\n\nYour exploit doesn't support hookmetamethod\n(x.synapse.to | script-ware.com)\n")
+    end
+
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", cclosure(function(self,...)
+    local NamecallMethod = getnamecallmethod()
+    local args = {...}
+    
+    if (NamecallMethod == "Kick" or NamecallMethod == "kick") and not checkcaller() then
+        if self ~= plr then
+            return oldNamecall(self,...)
+        end
+        return
+    end
+    
+    return oldNamecall(self,...)
+end))
+
 local TargetGUI = Instance.new("ScreenGui")
 local Target = Instance.new("TextBox")
 local Background = Instance.new("ImageLabel")
@@ -23,13 +46,14 @@ Target.ClipsDescendants = true
 Target.Position = UDim2.new(.36, 0, .85, 0)
 Target.Size = UDim2.new(.3, .5, .03, 21)
 Target.Font = Enum.Font.SourceSans
-Target.PlaceholderText = "[CS]: Cocksex v2; Who you finna steez up"
+Target.PlaceholderText = "[CS]: Cocksex v2; Press E to Shoot | F = Select Target | H = Toggle Anti-Ragdoll | R = Respawn"
 Target.Text = ""
 Target.TextColor3 = Color3.new(90, 70, 50)
 Target.TextSize = 15
 Target.TextWrapped = true
 Target.Draggable = true
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StartPing = tick()
 ReplicatedStorage.DefaultChatSystemChatEvents.MutePlayerRequest:InvokeServer()
 PlayersPing = (tick() - StartPing)
@@ -41,7 +65,7 @@ function fireat(target)
             u = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot
             if target.Character then
                 local TargetPart = targetee.Character.Torso
-                u:FireServer(TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
+                u:FireServer((TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5)))
             end
         end
     end
@@ -88,11 +112,56 @@ function UnCtrlSelect(inputObject, gameProcessedEvent)
         Selecting = false
     end
 end
+function RespawnListen(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.R and gameProcessedEvent == false then
+        local plr = game.Players.LocalPlayer
+        plr.Character.Humanoid.Health = 0
+        wait(0.1)
+        plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
+        plr.Character.HumanoidRootPart:Destroy()
+        plr.Character:Destroy()
+        local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
+        local H = Instance.new('Humanoid', M)
+        local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
+        plr.Character = M
+    end
+end
+local ragdollTog = false
+function AntiRagdoll(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.H and gameProcessedEvent == false then
+        ragdollTog = not ragdollTog
+        hu = game.Players.LocalPlayer.Character.Humanoid
+        if not ragdollTog then
+            for i,v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+                if v.Name == "Humanoid" then
+                    if v.HipHeight == 0.1 then
+                        v:Destroy()
+                    end
+                end
+            end
+        else
+            local l = Instance.new("Humanoid")
+            l.Parent = game.Players.LocalPlayer.Character
+            l.Name = "Humanoid"
+            l.HipHeight = 0.1
+            wait(0.1)
+            hu.Parent = game.Players.LocalPlayer
+            game.Workspace.CurrentCamera.CameraSubject = game.Players.LocalPlayer.Character
+            game.Players.LocalPlayer.Character.Animate.Disabled = true
+            wait(0.1)
+            game.Players.LocalPlayer.Character.Animate.Disabled = false
+        end
+    end
+end
+
+
 
 game:GetService("UserInputService").InputBegan:connect(ShootGlocks)
 game:GetService("UserInputService").InputEnded:connect(UnShootGlocks)
 game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
+game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
+game:GetService("UserInputService").InputEnded:connect(RespawnListen)
 
 game:GetService("RunService").Stepped:connect(
     function()
@@ -101,11 +170,16 @@ game:GetService("RunService").Stepped:connect(
                 if mouse.Target.Parent:IsA("Model") and game.Players:FindFirstChild(mouse.Target.Parent.Name) then
                     Target.Text = mouse.Target.Parent.Name
                     targetee = game.Players:FindFirstChild(mouse.Target.Parent.Name)
-                    getgenv().curTarget = mouse.Target.Parent.Name
+                    getgenv().curTarget = targetee
                     
                     local name = mouse.Target.Parent.Name
                     local char = mouse.Target.Parent
-                    TargetHighlight.Adornee = mouse.Target.Parent
+                    coroutine.wrap(function()
+                        repeat
+                            wait()
+                        until getgenv().curTarget.Character ~= nil
+                        TargetHighlight.Adornee = getgenv().curTarget.Character
+                    end)()
                 end
             end
         end
