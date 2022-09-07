@@ -23,14 +23,16 @@ Target.ClipsDescendants = true
 Target.Position = UDim2.new(.36, 0, .85, 0)
 Target.Size = UDim2.new(.3, .5, .03, 21)
 Target.Font = Enum.Font.SourceSans
-Target.PlaceholderText = "[CS]: (Made by Poleszx) Best aimbot anyone that uses is godly"
+Target.PlaceholderText = "[CS]: Cocksex v2; Who you finna steez up"
 Target.Text = ""
 Target.TextColor3 = Color3.new(90, 70, 50)
 Target.TextSize = 15
 Target.TextWrapped = true
 Target.Draggable = true
 
-local highlightTable = {}
+local StartPing = tick()
+ReplicatedStorage.DefaultChatSystemChatEvents.MutePlayerRequest:InvokeServer()
+PlayersPing = (tick() - StartPing)
 
 local debounce = false
 function fireat(target)
@@ -38,7 +40,8 @@ function fireat(target)
         if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot then
             u = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot
             if target.Character then
-                u:FireServer(targetee.Character.Torso.CFrame)
+                local TargetPart = targetee.Character.Torso
+                u:FireServer(TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
             end
         end
     end
