@@ -1,6 +1,4 @@
 -- cs v2
-
-local Highlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/ovicular/Highlight/main/Main.lua"))()
 targetee = nil
 pleaseshoot = false
 mouse = game.Players.LocalPlayer:GetMouse()
