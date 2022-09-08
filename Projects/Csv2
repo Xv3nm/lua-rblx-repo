@@ -44,7 +44,7 @@ Target.ClipsDescendants = true
 Target.Position = UDim2.new(.36, 0, .85, 0)
 Target.Size = UDim2.new(.3, .5, .03, 21)
 Target.Font = Enum.Font.SourceSans
-Target.PlaceholderText = "[CS]: Cocksex v2; Press E to Shoot | F = Select Target | H = Toggle Anti-Ragdoll | R = Respawn"
+Target.PlaceholderText = "[CS]: Cocksex v2, a family company."
 Target.Text = ""
 Target.TextColor3 = Color3.new(90, 70, 50)
 Target.TextSize = 15
@@ -56,6 +56,21 @@ local StartPing = tick()
 ReplicatedStorage.DefaultChatSystemChatEvents.MutePlayerRequest:InvokeServer()
 PlayersPing = (tick() - StartPing)
 
+function Notify(title, text, time)
+    game.StarterGui:SetCore("SendNotification",{
+        Title = title;
+        Text = text;
+        Icon = "rbxassetid://5793181157";
+        Duration = time;
+    })
+end
+print("[CS] Press E to shoot")
+print("[CS] Press F to lock on to targert")
+print("[CS] Press H to toggle anti-ragdoll")
+print("[CS] Press R to respawn")
+
+Notify("Cocksex v2", "Successfully executed! Check console for commands.",5)
+
 local debounce = false
 function fireat(target)
     if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
@@ -63,7 +78,15 @@ function fireat(target)
             u = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot
             if target.Character then
                 local TargetPart = targetee.Character.Torso
-                u:FireServer((TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5)))
+                local TargetPosition;
+                local LastVel = getgenv().LastVelocity or TargetPart.Velocity.magnitude
+                if LastVel > TargetPart.Velocity.magnitude then
+                    TargetPosition = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
+                else
+                    TargetPosition = (TargetPart.CFrame)
+                end
+                u:FireServer(TargetPosition)
+                getgenv().LastVelocity = TargetPart.Velocity.magnitude
             end
         end
     end
@@ -108,6 +131,7 @@ end
 function UnCtrlSelect(inputObject, gameProcessedEvent)
     if inputObject.KeyCode == Enum.KeyCode.F and gameProcessedEvent == false then
         Selecting = false
+        Notify("Cocksex v2", getgenv().curTarget.Name.." has been selected.",5)
     end
 end
 function RespawnListen(inputObject, gameProcessedEvent)
@@ -122,6 +146,7 @@ function RespawnListen(inputObject, gameProcessedEvent)
         local H = Instance.new('Humanoid', M)
         local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
         plr.Character = M
+        Notify("Cocksex v2", "Player successfully reset!",5)
     end
 end
 local ragdollTog = false
@@ -149,6 +174,7 @@ function AntiRagdoll(inputObject, gameProcessedEvent)
             wait(0.1)
             game.Players.LocalPlayer.Character.Animate.Disabled = false
         end
+        Notify("Cocksex v2", "Anti-Ragdoll: "..ragdollTog,5)
     end
 end
 
@@ -180,21 +206,6 @@ game:GetService("RunService").Stepped:connect(
                     end)()
                 end
             end
-        end
-    end
-)
-
--- simple reset with a button script (made by Tracy)
-
-local Player = game:GetService("Players").LocalPlayer
-local Mouse = Player:GetMouse()
-Mouse.KeyDown:Connect(
-    function(key)
-        if key == "g" then
-            game.Players.LocalPlayer.Character.Torso:Destroy()
-            local plr = game.Players.LocalPlayer
-            local humanoid = plr.Character.Humanoid
-            local position = plr.Character.HumanoidRootPart.CFrame
         end
     end
 )
