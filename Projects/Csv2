@@ -3,14 +3,6 @@ targetee = nil
 pleaseshoot = false
 mouse = game.Players.LocalPlayer:GetMouse()
 
--- binds
-
-local bindDict = {
-    ["Shoot"] = Enum.KeyCode.E,
-    ["Target"] = Enum.KeyCode.F,
-    ["AntiRagdoll"] = Enum.KeyCode.H,
-    ["Respawn"] = Enum.KeyCode.R
-}
 -- Anti Kick
 
 local plr = game:GetService("Players").LocalPlayer
@@ -75,6 +67,7 @@ end
 print("[CS] Press E to shoot")
 print("[CS] Press F to lock on to targert")
 print("[CS] Press H to toggle anti-ragdoll")
+print("[CS] Press V to toggle gun spoofing")
 print("[CS] Press R to respawn")
 
 Notify("Cocksex v2", "Successfully executed! Check console for commands.",5)
@@ -121,49 +114,80 @@ Target.FocusLost:Connect(
     end
 )
 
-function Respawn()
-    local plr = game.Players.LocalPlayer
-    plr.Character.Humanoid.Health = 0
-    wait(0.1)
-    plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
-    plr.Character.HumanoidRootPart:Destroy()
-    plr.Character:Destroy()
-    local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
-    local H = Instance.new('Humanoid', M)
-    local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
-    plr.Character = M
-    Notify("Cocksex v2", "Player successfully reset!",5)
-end
-
 function ShootGlocks(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["Shoot"] and gameProcessedEvent == false then
+    if inputObject.KeyCode == Enum.KeyCode.E and gameProcessedEvent == false then
         fireat(targetee)
     end
 end
 function UnShootGlocks(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["Shoot"] and gameProcessedEvent == false then
+    if inputObject.KeyCode == Enum.KeyCode.E and gameProcessedEvent == false then
         pleaseshoot = false
     end
 end
 function CtrlSelect(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["Target"] and gameProcessedEvent == false then
+    if inputObject.KeyCode == Enum.KeyCode.F and gameProcessedEvent == false then
         Selecting = true
     end
 end
 function UnCtrlSelect(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["Target"] and gameProcessedEvent == false then
+    if inputObject.KeyCode == Enum.KeyCode.F and gameProcessedEvent == false then
         Selecting = false
         Notify("Cocksex v2", getgenv().curTarget.Name.." has been selected.",5)
     end
 end
 function RespawnListen(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["Respawn"] and gameProcessedEvent == false then
-        Respawn()
+    if inputObject.KeyCode == Enum.KeyCode.R and gameProcessedEvent == false then
+        local plr = game.Players.LocalPlayer
+        local pos = plr.Character.HumanoidRootPart.CFrame
+        plr.Character.Humanoid.Health = 0
+        wait(0.1)
+        plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
+        plr.Character.HumanoidRootPart:Destroy()
+        plr.Character:Destroy()
+        local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
+        local H = Instance.new('Humanoid', M)
+        local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
+        plr.Character = M
+        M:Destroy()
+        H:Destroy()
+        T:Destroy()
+        for i,v in pairs(workspace:GetChildren()) do
+            if v.Name == 'respawn_iy' then
+                v:Destroy()
+            end
+        end
+        wait()
+        repeat 
+            wait()
+        until plr.Character:FindFirstChild("HumanoidRootPart")
+        
+        plr.Character.HumanoidRootPart.CFrame = pos
+        
+        Notify("Cocksex v2", "Player successfully reset!",5)
+    end
+end
+local spoof = false;
+function MoveGun(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.V and gameProcessedEvent == false then
+        spoof = not spoof
+        local lp = game.Players.LocalPlayer
+        local Grip = lp.Character["Right Arm"].RightGrip
+        local Gun = lp.Character:FindFirstChildWhichIsA("Tool")
+        if spoof then
+            Grip:Destroy()
+            repeat
+                Gun.Handle.CFrame = getgenv().curTarget.Character.Torso.CFrame
+                wait()
+            until Gun == nil
+        else
+            Gun = nil
+        end
+        Notify("Cocksex v2", "Gun spoofing: "..tostring(spoof),5)
     end
 end
 local ragdollTog = false
 function AntiRagdoll(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == bindDict["AntiRagdoll"] and gameProcessedEvent == false then
+    if inputObject.KeyCode == Enum.KeyCode.H and gameProcessedEvent == false then
         ragdollTog = not ragdollTog
         hu = game.Players.LocalPlayer.Character.Humanoid
         if not ragdollTog then
@@ -171,7 +195,6 @@ function AntiRagdoll(inputObject, gameProcessedEvent)
                 if v.Name == "Humanoid" then
                     if v.HipHeight == 0.1 then
                         v:Destroy()
-                        Respawn()
                     end
                 end
             end
@@ -187,7 +210,7 @@ function AntiRagdoll(inputObject, gameProcessedEvent)
             wait(0.1)
             game.Players.LocalPlayer.Character.Animate.Disabled = false
         end
-        Notify("Cocksex v2", "Anti-Ragdoll: "..ragdollTog,5)
+        Notify("Cocksex v2", "Anti-Ragdoll: "..tostring(ragdollTog),5)
     end
 end
 
@@ -199,6 +222,8 @@ game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
 game:GetService("UserInputService").InputEnded:connect(RespawnListen)
+game:GetService("UserInputService").InputEnded:connect(MoveGun)
+
 
 game:GetService("RunService").Stepped:connect(
     function()
@@ -222,3 +247,41 @@ game:GetService("RunService").Stepped:connect(
         end
     end
 )
+
+function deathReturn()
+    local plr = game.Players.LocalPlayer
+    local pos = plr.Character.HumanoidRootPart.CFrame
+    plr.Character.Humanoid.Health = 0
+    wait(0.1)
+    plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
+    plr.Character.HumanoidRootPart:Destroy()
+    plr.Character:Destroy()
+    local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
+    local H = Instance.new('Humanoid', M)
+    local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
+    plr.Character = M
+    M:Destroy()
+    H:Destroy()
+    T:Destroy()
+    for i,v in pairs(workspace:GetChildren()) do
+        if v.Name == 'respawn_iy' then
+            v:Destroy()
+        end
+    end
+    wait()
+    repeat 
+        wait()
+    until plr.Character:FindFirstChild("HumanoidRootPart")
+    
+    plr.Character.HumanoidRootPart.CFrame = pos
+    
+    Notify("Cocksex v2", "Player successfully returned!",5)
+end
+
+coroutine.wrap(function()
+    while wait() do
+        if game.Players.LocalPlayer.Character.Humanoid.Health == 0 then
+            deathReturn()
+        end
+    end
+end)()
