@@ -55,6 +55,16 @@ local CamlockPlayer;
 local hvhing = false;
 local FlySpeed = 10;
 
+local KeyTable = {
+	['W'] = false;
+	['A'] = false;
+	['S'] = false;
+	['D'] = false;
+	['Shift'] = false;
+	['Space'] = false;
+	['Control'] = false;
+}
+
 local EstimatedGunRanges = {
 	['Glock'] = 100;
 	['Uzi'] = 100;
@@ -99,7 +109,8 @@ function Notify(title, text, time)
     })
 end
 print("[CS] Press E to shoot")
-print("[CS] Press F to lock on to targert")
+print("[CS] Press V to toggle trigger bot")
+print("[CS] Press F to lock on to target")
 print("[CS] Press H to toggle no-groundhit")
 print("[CS] Press R to respawn")
 
@@ -199,6 +210,26 @@ function RespawnListen(inputObject, gameProcessedEvent)
         Notify("Cocksex v2", "Player successfully reset!",5)
     end
 end
+local function HasItem(Player,Item)
+	if Player then 
+		local ItemFound = Player.Character:FindFirstChild(Item,true) or Player.Backpack:FindFirstChild(Item,true)
+		return ItemFound and "Yes" or "No" 
+	end 
+end
+local function AimbotToCFrame()
+    local CFrameToReturn;
+    local AimlockTarget = getgenv().curTarget
+    local TargetPart = AimlockTarget.FindFirstChild(AimlockTarget,'RealHumanoidRootPart') or AimlockTarget.FindFirstChild(AimlockTarget,'Torso')
+	CFrameToReturn = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
+	return CFrameToReturn
+end
+local TriggerBotTog = false
+function TriggerBot(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.V and gameProcessedEvent == false then
+        TriggerBotTog = not TriggerBotTog
+        Notify("Cocksex v2", "TriggerBot: "..tostring(TriggerBotTog),5)
+    end
+end
 local ragdollTog = false
 function AntiRagdoll(inputObject, gameProcessedEvent)
     if inputObject.KeyCode == Enum.KeyCode.H and gameProcessedEvent == false then
@@ -206,6 +237,16 @@ function AntiRagdoll(inputObject, gameProcessedEvent)
         Notify("Cocksex v2", "No-Groundhit: "..tostring(ragdollTog),5)
     end
 end
+function LoopChangeWalkSpeed()
+	if KeyTable['Shift'] and (WalkShoot and (LP.Backpack:FindFirstChild'ServerTraits' and LP.Backpack.ServerTraits.Stann.Value > 0 or GetChar():FindFirstChild'Stamina' and GetChar().Stamina.Value > 0) or not WalkShoot) then
+		GetChar().Humanoid.WalkSpeed = 25
+		return
+	else
+		GetChar().Humanoid.WalkSpeed = 16
+		return 
+	end
+end
+
 
 local LP = game:GetService("Players").LocalPlayer
 
@@ -214,12 +255,14 @@ local function StateChanged(Old,New)
 		if New == Enum.HumanoidStateType.FallingDown or New == Enum.HumanoidStateType.PlatformStanding then
 			plr.Character.Humanoid.PlatformStand = false
 			plr.Character.Humanoid:ChangeState(8)
-            plr.Character.Humanoid.WalkSpeed = 16
 		end
 	end 
 end
 
 local function stopAnim(Id)
+    repeat
+        wait()
+    until plr.Character:FindFirstChild("Humanoid")
 	local Tracks = plr.Character.Humanoid:GetPlayingAnimationTracks()
 	for i = 1,#Tracks do 
 		local Track = Tracks[i] 
@@ -246,6 +289,7 @@ end
 local HumanoidStateChanged;HumanoidStateChanged = LP.Character.Humanoid.StateChanged:Connect(StateChanged)
 local RemoveGunAnimationEvent;RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
 local ColourChangerEvent;ColourChangerEvent = LP.Character.DescendantAdded:Connect(ColorBullet)
+local WalkSpeedChangedEvent;WalkSpeedChangedEvent = LP.Character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(LoopChangeWalkSpeed)
 
 
 LP.CharacterAdded:Connect(function(C)
@@ -263,13 +307,6 @@ LP.CharacterAdded:Connect(function(C)
 	ColourChangerEvent:Disconnect()
 	ColourChangerEvent = nil
 	ColourChangerEvent = C.DescendantAdded:Connect(ColourChanger)
-	repeat
-        wait()
-    until game.Players.LocalPlayer.PlayerGui:FindFirstChild("LocalScript")
-    local lScript = game.Players.LocalPlayer.PlayerGui.LocalScript
-    lScript:FindFirstChild("Hit1"):Destroy()
-    lScript:FindFirstChild("Hit2"):Destroy()
-    lScript:FindFirstChild("Hit3"):Destroy()
 end)
 
 
@@ -279,9 +316,10 @@ game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
 game:GetService("UserInputService").InputEnded:connect(RespawnListen)
+game:GetService("UserInputService").InputEnded:connect(TriggerBot)
+
 
 function SelectTarget(T)
-
     if Selecting == true then
         if mouse.Target then
             if mouse.Target.Parent:IsA("Model") and game.Players:FindFirstChild(mouse.Target.Parent.Name) then
@@ -307,7 +345,11 @@ function SelectTarget(T)
         else 
             workspace.CurrentCamera.CoordinateFrame = CFrame.new(workspace.CurrentCamera.CoordinateFrame.p,CamlockPlayer.Character.Head.CFrame.p)
         end 
-    end 
+    end
+    if TriggerBotTog then
+        wait(0.12)
+		fireat(getgenv().curTarget)
+    end
 end
 
 game:GetService("RunService").Stepped:connect(SelectTarget)
