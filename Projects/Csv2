@@ -26,6 +26,24 @@ local plr = game:GetService("Players").LocalPlayer
     return oldNamecall(self,...)
 end))
 
+-- Variables
+
+getgenv().Players = game:GetService'Players'
+getgenv().TeleportService = game:GetService'TeleportService'
+getgenv().ReplicatedStorage = game:GetService'ReplicatedStorage' 
+getgenv().StarterGui = game:GetService'StarterGui'
+getgenv().TweenService = game:GetService'TweenService'
+getgenv().UserInput = game:GetService'UserInputService'
+getgenv().RunService = game:GetService'RunService'
+getgenv().Lighting = game:GetService'Lighting'
+getgenv().CoreGui = game:GetService'CoreGui'
+getgenv().HttpService = game:GetService'HttpService'
+getgenv().VirtualUser = game:GetService'VirtualUser'
+getgenv().LP = Players.LocalPlayer or Players.PlayerAdded:Wait()
+getgenv().Mouse = LP:GetMouse()
+getgenv().GetChar = function() return LP.Character or LP.CharacterAdded:Wait() end
+GetChar():WaitForChild'Humanoid'
+
 local TargetGUI = Instance.new("ScreenGui")
 local Target = Instance.new("TextBox")
 local Background = Instance.new("ImageLabel")
@@ -36,6 +54,15 @@ local CamlockTarget = "Torso"
 local CamlockPlayer;
 local hvhing = false;
 local FlySpeed = 10;
+
+local EstimatedGunRanges = {
+	['Glock'] = 100;
+	['Uzi'] = 100;
+	['Sawed Off'] = 50;
+	['Shotty'] = 50;
+}
+
+-- Script
 
 TargetHighlight.FillColor = Color3.new(255,0,0)
 TargetHighlight.OutlineColor = Color3.new(0,0,0)
@@ -187,6 +214,7 @@ local function StateChanged(Old,New)
 		if New == Enum.HumanoidStateType.FallingDown or New == Enum.HumanoidStateType.PlatformStanding then
 			plr.Character.Humanoid.PlatformStand = false
 			plr.Character.Humanoid:ChangeState(8)
+            plr.Character.Humanoid.WalkSpeed = 16
 		end
 	end 
 end
@@ -235,6 +263,13 @@ LP.CharacterAdded:Connect(function(C)
 	ColourChangerEvent:Disconnect()
 	ColourChangerEvent = nil
 	ColourChangerEvent = C.DescendantAdded:Connect(ColourChanger)
+	repeat
+        wait()
+    until game.Players.LocalPlayer.PlayerGui:FindFirstChild("LocalScript")
+    local lScript = game.Players.LocalPlayer.PlayerGui.LocalScript
+    lScript:FindFirstChild("Hit1"):Destroy()
+    lScript:FindFirstChild("Hit2"):Destroy()
+    lScript:FindFirstChild("Hit3"):Destroy()
 end)
 
 
@@ -245,14 +280,7 @@ game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
 game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
 game:GetService("UserInputService").InputEnded:connect(RespawnListen)
 
-function SelectTarget(Override,T)
-    if Override ~= nil and T ~= nil then
-        if Override then
-            Target.Text = T.Name
-            targetee = game.Players:FindFirstChild(T.Name)
-            getgenv().curTarget = targetee
-        end
-    end
+function SelectTarget(T)
 
     if Selecting == true then
         if mouse.Target then
@@ -266,7 +294,7 @@ function SelectTarget(Override,T)
     coroutine.wrap(function()
         repeat
             wait()
-        until getgenv().curTarget.Character ~= nil
+        until getgenv().curTarget ~= nil
         TargetHighlight.Adornee = getgenv().curTarget.Character
     end)()
     if Flying then
@@ -349,29 +377,28 @@ local function hvh(Target)
             local Character = GetChar()
             local Torso = Character:FindFirstChild'Torso'
             if not Torso then return end 
-                local BodyGyro,BodyVelocity = Instance.new('BodyGyro',Torso),Instance.new('BodyVelocity',Torso)
-                BodyGyro.P = 9e9
-                BodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
-                BodyGyro.CFrame = Torso.CFrame
-                BodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
-                BodyVelocity.Velocity = Vector3.new(0,0.1,0)
-                BodyVelocity.Name = "CyAdminFly"
-                local Table1 = {['W'] = 0;['A'] = 0;['S'] = 0;['D'] = 0;}
-                while Flying and Character:FindFirstChild'Humanoid' and Character.Humanoid.Health > 0 and wait() do 
-                    if KeyTable['W'] then Table1['W'] = FlySpeed else Table1['W'] = 0 end 
-                    if KeyTable['A'] then Table1['A'] = -FlySpeed else Table1['A'] = 0 end 
-                    if KeyTable['S'] then Table1['S'] = -FlySpeed else Table1['S'] = 0 end 
-                    if KeyTable['D'] then Table1['D'] = FlySpeed else Table1['D'] = 0 end 
-                    if (Table1['W'] + Table1['S']) ~= 0 or (Table1['A'] + Table1['D']) ~= 0 then
-                        BodyVelocity.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (Table1['W'] + Table1['S'])) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(Table1['A'] + Table1['D'], (Table1['W'] + Table1['S']) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * 50
-                    else
-                        BodyVelocity.Velocity = Vector3.new(0,0.1,0)
-                    end
-                    BodyGyro.CFrame = workspace.CurrentCamera.CoordinateFrame
+            local BodyGyro,BodyVelocity = Instance.new('BodyGyro',Torso),Instance.new('BodyVelocity',Torso)
+            BodyGyro.P = 9e9
+            BodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
+            BodyGyro.CFrame = Torso.CFrame
+            BodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
+            BodyVelocity.Velocity = Vector3.new(0,0.1,0)
+            BodyVelocity.Name = "CyAdminFly"
+            local Table1 = {['W'] = 0;['A'] = 0;['S'] = 0;['D'] = 0;}
+            while Flying and Character:FindFirstChild'Humanoid' and Character.Humanoid.Health > 0 and wait() do 
+                if KeyTable['W'] then Table1['W'] = FlySpeed else Table1['W'] = 0 end 
+                if KeyTable['A'] then Table1['A'] = -FlySpeed else Table1['A'] = 0 end 
+                if KeyTable['S'] then Table1['S'] = -FlySpeed else Table1['S'] = 0 end 
+                if KeyTable['D'] then Table1['D'] = FlySpeed else Table1['D'] = 0 end 
+                if (Table1['W'] + Table1['S']) ~= 0 or (Table1['A'] + Table1['D']) ~= 0 then
+                    BodyVelocity.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (Table1['W'] + Table1['S'])) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(Table1['A'] + Table1['D'], (Table1['W'] + Table1['S']) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * 50
+                else
+                    BodyVelocity.Velocity = Vector3.new(0,0.1,0)
                 end
-                BodyGyro:Destroy()
-                BodyVelocity:Destroy()
+                BodyGyro.CFrame = workspace.CurrentCamera.CoordinateFrame
             end
+            BodyGyro:Destroy()
+            BodyVelocity:Destroy()
         end
     else
         CamLocking = false
