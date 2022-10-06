@@ -72,6 +72,29 @@ local EstimatedGunRanges = {
 	['Shotty'] = 50;
 }
 
+-- AC Bypass
+
+local Raw = getrawmetatable(game)
+local Caller = checkcaller or is_protosmasher_caller or Cer.isCerus
+local CallingScript = getcallingscript or get_calling_script
+local Closure = newcclosure or read_me or function(Func) return Func end
+local CallingMethod = getnamecallmethod or get_namecall_method
+
+setreadonly(Raw,false)
+
+local NewIndex = Raw.__newindex;
+Raw.__newindex = Closure(function(self,Property,Value)
+	if Caller() then return NewIndex(self,Property,Value) end
+	StarterGui:SetCore('ResetButtonCallback',true)
+	if Property == "WalkSpeed" and WalkShoot then return 16 end
+	if Property == "JumpPower" then return 37.5 end 
+	if Property == "HipHeight" then return 0 end 
+	if Property == "Health" then return 100 end
+	if self == workspace and Property == "Gravity" then return NormalGravity end
+	if Property == "CFrame" and self:IsDescendantOf(LP.Character) then return end 
+	return NewIndex(self,Property,Value)
+end)
+
 -- Script
 
 TargetHighlight.FillColor = Color3.new(255,0,0)
@@ -237,16 +260,6 @@ function AntiRagdoll(inputObject, gameProcessedEvent)
         Notify("Cocksex v2", "No-Groundhit: "..tostring(ragdollTog),5)
     end
 end
-function LoopChangeWalkSpeed()
-	if KeyTable['Shift'] and (WalkShoot and (LP.Backpack:FindFirstChild'ServerTraits' and LP.Backpack.ServerTraits.Stann.Value > 0 or GetChar():FindFirstChild'Stamina' and GetChar().Stamina.Value > 0) or not WalkShoot) then
-		GetChar().Humanoid.WalkSpeed = 25
-		return
-	else
-		GetChar().Humanoid.WalkSpeed = 16
-		return 
-	end
-end
-
 
 local LP = game:GetService("Players").LocalPlayer
 
@@ -289,7 +302,6 @@ end
 local HumanoidStateChanged;HumanoidStateChanged = LP.Character.Humanoid.StateChanged:Connect(StateChanged)
 local RemoveGunAnimationEvent;RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
 local ColourChangerEvent;ColourChangerEvent = LP.Character.DescendantAdded:Connect(ColorBullet)
-local WalkSpeedChangedEvent;WalkSpeedChangedEvent = LP.Character.Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(LoopChangeWalkSpeed)
 
 
 LP.CharacterAdded:Connect(function(C)
@@ -418,7 +430,7 @@ local function hvh(Target)
         local function Fly()
             local Character = GetChar()
             local Torso = Character:FindFirstChild'Torso'
-            if not Torso then return end 
+            if not Torso then return end
             local BodyGyro,BodyVelocity = Instance.new('BodyGyro',Torso),Instance.new('BodyVelocity',Torso)
             BodyGyro.P = 9e9
             BodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
@@ -446,28 +458,3 @@ local function hvh(Target)
         CamLocking = false
     end
 end
-
-
-
--- [[ Bypass ]] --
-
-local Raw = getrawmetatable(game)
-local Caller = checkcaller or is_protosmasher_caller or Cer.isCerus
-local CallingScript = getcallingscript or get_calling_script
-local Closure = newcclosure or read_me or function(Func) return Func end
-local CallingMethod = getnamecallmethod or get_namecall_method
-
-setreadonly(Raw,false)
-
-local NewIndex = Raw.__newindex;
-Raw.__newindex = Closure(function(self,Property,Value)
-	if Caller() then return NewIndex(self,Property,Value) end
-	StarterGui:SetCore('ResetButtonCallback',true)
-	if Property == "WalkSpeed" and WalkShoot then return 16 end
-	if Property == "JumpPower" then return 37.5 end 
-	if Property == "HipHeight" then return 0 end 
-	if Property == "Health" then return 100 end
-	if self == workspace and Property == "Gravity" then return NormalGravity end
-	if Property == "CFrame" and self:IsDescendantOf(LP.Character) then return end 
-	return NewIndex(self,Property,Value)
-end)
