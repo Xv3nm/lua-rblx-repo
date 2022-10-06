@@ -1,211 +1,403 @@
--- cs v2
-targetee = nil
-pleaseshoot = false
-mouse = game.Players.LocalPlayer:GetMouse()
+--[[   Cs v2 : Totem#0001  ]]
 
--- Anti Kick
+local Settings={}
 
-local plr = game:GetService("Players").LocalPlayer
+Settings['binds'] = {
+    ["Shoot"] = "E",
+    ["TriggerBot"] = "V",
+    ["Lock"] = "F",
+    ["NoGroundhit"] = "H",
+    ["Respawn"] = "R"
+}
+
+-- Init
+
+local function Init()
+    if getgenv().csv ~= nil then
+        if getgenv().csv["init"] ~= nil then
+            return false
+        end
+    else
+        getgenv().csv = {}
+        getgenv().csv["init"] = true
+        getgenv().csv["targetee"] = nil
+        getgenv().csv["pleaseshoot"] = false
+        return true
+    end
+end
+
+if not Init() then
+    warn("Do not execute csv2 twice... \nOverlapping instances could result in a kick or in some cases a ban.")
+else
+   -- Anti Kick (Adonis trash lol)
+    local plr = game:GetService("Players").LocalPlayer
     local cclosure = syn_newcclosure or newcclosure or nil
     if not cclosure or not hookmetamethod then
         plr:Kick("\n\nYour exploit doesn't support hookmetamethod\n(x.synapse.to | script-ware.com)\n")
     end
-
-    local oldNamecall
-    oldNamecall = hookmetamethod(game, "__namecall", cclosure(function(self,...)
-    local NamecallMethod = getnamecallmethod()
-    local args = {...}
-    
-    if (NamecallMethod == "Kick" or NamecallMethod == "kick") and not checkcaller() then
-        if self ~= plr then
-            return oldNamecall(self,...)
-        end
-        return
-    end
-    
-    return oldNamecall(self,...)
-end))
-
--- Variables
-
-getgenv().Players = game:GetService'Players'
-getgenv().TeleportService = game:GetService'TeleportService'
-getgenv().ReplicatedStorage = game:GetService'ReplicatedStorage' 
-getgenv().StarterGui = game:GetService'StarterGui'
-getgenv().TweenService = game:GetService'TweenService'
-getgenv().UserInput = game:GetService'UserInputService'
-getgenv().RunService = game:GetService'RunService'
-getgenv().Lighting = game:GetService'Lighting'
-getgenv().CoreGui = game:GetService'CoreGui'
-getgenv().HttpService = game:GetService'HttpService'
-getgenv().VirtualUser = game:GetService'VirtualUser'
-getgenv().LP = Players.LocalPlayer or Players.PlayerAdded:Wait()
-getgenv().Mouse = LP:GetMouse()
-getgenv().GetChar = function() return LP.Character or LP.CharacterAdded:Wait() end
-GetChar():WaitForChild'Humanoid'
-
-local TargetGUI = Instance.new("ScreenGui")
-local Target = Instance.new("TextBox")
-local Background = Instance.new("ImageLabel")
-local TargetHighlight = Instance.new("Highlight",game:GetService("CoreGui"))
-local BulletColour = ColorSequence.new(Color3.fromRGB(144,0,0))
-
-local CamlockTarget = "Torso"
-local CamlockPlayer;
-local hvhing = false;
-local FlySpeed = 10;
-
-local KeyTable = {
-	['W'] = false;
-	['A'] = false;
-	['S'] = false;
-	['D'] = false;
-	['Shift'] = false;
-	['Space'] = false;
-	['Control'] = false;
-}
-
-local EstimatedGunRanges = {
-	['Glock'] = 100;
-	['Uzi'] = 100;
-	['Sawed Off'] = 50;
-	['Shotty'] = 50;
-}
-
--- AC Bypass
-
-local Raw = getrawmetatable(game)
-local Caller = checkcaller or is_protosmasher_caller or Cer.isCerus
-local CallingScript = getcallingscript or get_calling_script
-local Closure = newcclosure or read_me or function(Func) return Func end
-local CallingMethod = getnamecallmethod or get_namecall_method
-
-setreadonly(Raw,false)
-
-local NewIndex = Raw.__newindex;
-Raw.__newindex = Closure(function(self,Property,Value)
-	if Caller() then return NewIndex(self,Property,Value) end
-	StarterGui:SetCore('ResetButtonCallback',true)
-	if Property == "WalkSpeed" and WalkShoot then return 16 end
-	if Property == "JumpPower" then return 37.5 end 
-	if Property == "HipHeight" then return 0 end 
-	if Property == "Health" then return 100 end
-	if self == workspace and Property == "Gravity" then return NormalGravity end
-	if Property == "CFrame" and self:IsDescendantOf(LP.Character) then return end 
-	return NewIndex(self,Property,Value)
-end)
-
--- Script
-
-TargetHighlight.FillColor = Color3.new(255,0,0)
-TargetHighlight.OutlineColor = Color3.new(0,0,0)
-
-TargetGUI.Name = "TargetGUI"
-TargetGUI.Parent = game:GetService("CoreGui")
-
-Target.Name = "Target"
-Target.Parent = TargetGUI
-Target.BackgroundColor3 = Color3.new(0, 0, 50)
-Target.BackgroundTransparency = 0.30000001192093
-Target.ClipsDescendants = true
-Target.Position = UDim2.new(.36, 0, .85, 0)
-Target.Size = UDim2.new(.3, .5, .03, 21)
-Target.Font = Enum.Font.SourceSans
-Target.PlaceholderText = "[CS]: Cocksex v2, a family company."
-Target.Text = ""
-Target.TextColor3 = Color3.new(90, 70, 50)
-Target.TextSize = 15
-Target.TextWrapped = true
-Target.Draggable = true
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StartPing = tick()
-ReplicatedStorage.DefaultChatSystemChatEvents.MutePlayerRequest:InvokeServer()
-PlayersPing = (tick() - StartPing)
-
-function Notify(title, text, time)
-    game.StarterGui:SetCore("SendNotification",{
-        Title = title;
-        Text = text;
-        Icon = "rbxassetid://5793181157";
-        Duration = time;
-    })
-end
-print("[CS] Press E to shoot")
-print("[CS] Press V to toggle trigger bot")
-print("[CS] Press F to lock on to target")
-print("[CS] Press H to toggle no-groundhit")
-print("[CS] Press R to respawn")
-
-Notify("Cocksex v2", "Successfully executed! Check console for commands.",5)
-
-local debounce = false
-function fireat(target)
-    if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
-        if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot then
-            u = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot
-            if target.Character then
-                local TargetPart = targetee.Character.Torso
-                local TargetPosition;
-                local LastVel = getgenv().LastVelocity or TargetPart.Velocity.magnitude
-                if LastVel > TargetPart.Velocity.magnitude then
-                    TargetPosition = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
-                else
-                    TargetPosition = (TargetPart.CFrame)
-                end
-                u:FireServer(TargetPosition)
-                getgenv().LastVelocity = TargetPart.Velocity.magnitude
+    local oldNamecall; oldNamecall = hookmetamethod(game, "__namecall", cclosure(function(self,...)
+        local NamecallMethod = getnamecallmethod()
+        local args = {...}
+        if (NamecallMethod == "Kick" or NamecallMethod == "kick") and not checkcaller() then
+            if self ~= plr then
+                return oldNamecall(self,...)
             end
+            return
         end
+        
+        return oldNamecall(self,...)
+    end))
+    
+    -- Variables
+    
+    
+    targetee = nil
+    pleaseshoot = false
+    mouse = game.Players.LocalPlayer:GetMouse()
+    getgenv().Players = game:GetService'Players'
+    getgenv().TeleportService = game:GetService'TeleportService'
+    getgenv().ReplicatedStorage = game:GetService'ReplicatedStorage' 
+    getgenv().StarterGui = game:GetService'StarterGui'
+    getgenv().TweenService = game:GetService'TweenService'
+    getgenv().UserInput = game:GetService'UserInputService'
+    getgenv().RunService = game:GetService'RunService'
+    getgenv().Lighting = game:GetService'Lighting'
+    getgenv().CoreGui = game:GetService'CoreGui'
+    getgenv().HttpService = game:GetService'HttpService'
+    getgenv().VirtualUser = game:GetService'VirtualUser'
+    getgenv().LP = Players.LocalPlayer or Players.PlayerAdded:Wait()
+    getgenv().Mouse = LP:GetMouse()
+    getgenv().GetChar = function() return LP.Character or LP.CharacterAdded:Wait() end
+    GetChar():WaitForChild'Humanoid'
+    
+    local TargetGUI = Instance.new("ScreenGui")
+    local Target = Instance.new("TextBox")
+    local Background = Instance.new("ImageLabel")
+    local TargetHighlight = Instance.new("Highlight",game:GetService("CoreGui"))
+    local BulletColour = ColorSequence.new(Color3.fromRGB(144,0,0))
+    
+    local CamlockTarget = "Torso"
+    local CamlockPlayer;
+    local hvhing = false;
+    local FlySpeed = 10;
+    
+    local KeyTable = {
+    	['W'] = false;
+    	['A'] = false;
+    	['S'] = false;
+    	['D'] = false;
+    	['Shift'] = false;
+    	['Space'] = false;
+    	['Control'] = false;
+    }
+    
+    local EstimatedGunRanges = {
+    	['Glock'] = 100;
+    	['Uzi'] = 100;
+    	['Sawed Off'] = 50;
+    	['Shotty'] = 50;
+    }
+    
+    -- AC Bypass
+    
+    local Raw = getrawmetatable(game)
+    local Caller = checkcaller or is_protosmasher_caller or Cer.isCerus
+    local CallingScript = getcallingscript or get_calling_script
+    local Closure = newcclosure or read_me or function(Func) return Func end
+    local CallingMethod = getnamecallmethod or get_namecall_method
+    
+    setreadonly(Raw,false)
+    
+    local NewIndex = Raw.__newindex;
+    Raw.__newindex = Closure(function(self,Property,Value)
+    	if Caller() then return NewIndex(self,Property,Value) end
+    	StarterGui:SetCore('ResetButtonCallback',true)
+    	if Property == "WalkSpeed" and WalkShoot then return 16 end
+    	if Property == "JumpPower" then return 37.5 end 
+    	if Property == "HipHeight" then return 0 end 
+    	if Property == "Health" then return 100 end
+    	if self == workspace and Property == "Gravity" then return NormalGravity end
+    	if Property == "CFrame" and self:IsDescendantOf(LP.Character) then return end 
+    	return NewIndex(self,Property,Value)
+    end)
+    
+    -- Script
+    
+    TargetHighlight.FillColor = Color3.new(255,0,0)
+    TargetHighlight.OutlineColor = Color3.new(0,0,0)
+    
+    TargetGUI.Name = "TargetGUI"
+    TargetGUI.Parent = game:GetService("CoreGui")
+    
+    Target.Name = "Target"
+    Target.Parent = TargetGUI
+    Target.BackgroundColor3 = Color3.new(0, 0, 50)
+    Target.BackgroundTransparency = 0.30000001192093
+    Target.ClipsDescendants = true
+    Target.Position = UDim2.new(.36, 0, .85, 0)
+    Target.Size = UDim2.new(.3, .5, .03, 21)
+    Target.Font = Enum.Font.SourceSans
+    Target.PlaceholderText = "[CS]: Cocksex v2, a family company."
+    Target.Text = ""
+    Target.TextColor3 = Color3.new(90, 70, 50)
+    Target.TextSize = 15
+    Target.TextWrapped = true
+    Target.Draggable = true
+    
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local StartPing = tick()
+    ReplicatedStorage.DefaultChatSystemChatEvents.MutePlayerRequest:InvokeServer()
+    PlayersPing = (tick() - StartPing)
+    
+    function Notify(title, text, time)
+        game.StarterGui:SetCore("SendNotification",{
+            Title = title;
+            Text = text;
+            Icon = "rbxassetid://5793181157";
+            Duration = time;
+        })
     end
-end
-
-Target.FocusLost:Connect(
-    function()
-        local name = string.lower(Target.Text)
-        local player = nil
-
-        names = game.Players:GetChildren()
-
-        for i, x in pairs(names) do
-            strlower = string.lower(x.Name)
-            sub = string.sub(strlower, 1, #name)
-
-            if name == sub then
-                player = x
-                if player.Name ~= game.Players.LocalPlayer.Name then
-                    targetee = player
+    
+    print("[CS] Press E to shoot")
+    print("[CS] Press V to toggle trigger bot")
+    print("[CS] Press F to lock on to target")
+    print("[CS] Press H to toggle no-groundhit")
+    print("[CS] Press R to respawn")
+    
+    Notify("Cocksex v2", "Successfully executed! Check console for commands.",5)
+    
+    local debounce = false
+    function fireat(target)
+        if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
+            if game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot then
+                u = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("Tool").Shoot
+                if target.Character then
+                    local TargetPart = targetee.Character.Torso
+                    local TargetPosition;
+                    local LastVel = getgenv().LastVelocity or TargetPart.Velocity.magnitude
+                    if LastVel > TargetPart.Velocity.magnitude then
+                        TargetPosition = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
+                    else
+                        TargetPosition = (TargetPart.CFrame)
+                    end
+                    u:FireServer(TargetPosition)
+                    getgenv().LastVelocity = TargetPart.Velocity.magnitude
                 end
             end
         end
     end
-)
-
-function ShootGlocks(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.E and gameProcessedEvent == false then
-        fireat(targetee)
+    
+    Target.FocusLost:Connect(
+        function()
+            local name = string.lower(Target.Text)
+            local player = nil
+    
+            names = game.Players:GetChildren()
+    
+            for i, x in pairs(names) do
+                strlower = string.lower(x.Name)
+                sub = string.sub(strlower, 1, #name)
+    
+                if name == sub then
+                    player = x
+                    if player.Name ~= game.Players.LocalPlayer.Name then
+                        targetee = player
+                    end
+                end
+            end
+        end
+    )
+    
+    function ShootGlocks(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['Shoot']] and gameProcessedEvent == false then
+            fireat(targetee)
+        end
     end
-end
-function UnShootGlocks(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.E and gameProcessedEvent == false then
-        pleaseshoot = false
+    function UnShootGlocks(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['Shoot']] and gameProcessedEvent == false then
+            pleaseshoot = false
+        end
     end
-end
-function CtrlSelect(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.F and gameProcessedEvent == false then
-        Selecting = true
+    function CtrlSelect(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['Lock']] and gameProcessedEvent == false then
+            Selecting = true
+        end
     end
-end
-function UnCtrlSelect(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.F and gameProcessedEvent == false then
-        Selecting = false
-        Notify("Cocksex v2", getgenv().curTarget.Name.." has been selected.",5)
+    function UnCtrlSelect(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['Lock']] and gameProcessedEvent == false then
+            Selecting = false
+            targ = getgenv().curTarget.Name or "No-one"
+            Notify("Cocksex v2", targ.." has been selected.",5)
+        end
     end
-end
-function RespawnListen(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.R and gameProcessedEvent == false then
+    function RespawnListen(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['Respawn']] and gameProcessedEvent == false then
+            local plr = game.Players.LocalPlayer
+            local pos = plr.Character.HumanoidRootPart.CFrame
+            plr.Character.Humanoid.Health = 0
+            wait(0.1)
+            plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
+            plr.Character.HumanoidRootPart:Destroy()
+            plr.Character:Destroy()
+            local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
+            local H = Instance.new('Humanoid', M)
+            local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
+            plr.Character = M
+            M:Destroy()
+            H:Destroy()
+            T:Destroy()
+            for i,v in pairs(workspace:GetChildren()) do
+                if v.Name == 'respawn_iy' then
+                    v:Destroy()
+                end
+            end
+            wait()
+            repeat 
+                wait()
+            until plr.Character:FindFirstChild("HumanoidRootPart")
+            
+            plr.Character.HumanoidRootPart.CFrame = pos
+            
+            Notify("Cocksex v2", "Player successfully reset!",5)
+        end
+    end
+    local function HasItem(Player,Item)
+    	if Player then 
+    		local ItemFound = Player.Character:FindFirstChild(Item,true) or Player.Backpack:FindFirstChild(Item,true)
+    		return ItemFound and "Yes" or "No" 
+    	end 
+    end
+    local function AimbotToCFrame()
+        local CFrameToReturn;
+        local AimlockTarget = getgenv().curTarget
+        local TargetPart = AimlockTarget.FindFirstChild(AimlockTarget,'RealHumanoidRootPart') or AimlockTarget.FindFirstChild(AimlockTarget,'Torso')
+    	CFrameToReturn = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
+    	return CFrameToReturn
+    end
+    local TriggerBotTog = false
+    function TriggerBot(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['TriggerBot']] and gameProcessedEvent == false then
+            TriggerBotTog = not TriggerBotTog
+            Notify("Cocksex v2", "TriggerBot: "..tostring(TriggerBotTog),5)
+        end
+    end
+    local ragdollTog = false
+    function AntiRagdoll(inputObject, gameProcessedEvent)
+        if inputObject.KeyCode == Enum.KeyCode[Settings['binds']['NoGroundhit']] and gameProcessedEvent == false then
+            ragdollTog = not ragdollTog
+            Notify("Cocksex v2", "No-Groundhit: "..tostring(ragdollTog),5)
+        end
+    end
+    
+    local LP = game:GetService("Players").LocalPlayer
+    
+    local function StateChanged(Old,New)
+    	if ragdollTog then 
+    		if New == Enum.HumanoidStateType.FallingDown or New == Enum.HumanoidStateType.PlatformStanding then
+    			plr.Character.Humanoid.PlatformStand = false
+    			plr.Character.Humanoid:ChangeState(8)
+    		end
+    	end 
+    end
+    
+    local function stopAnim(Id)
+        repeat
+            wait()
+        until plr.Character:FindFirstChild("Humanoid")
+    	local Tracks = plr.Character.Humanoid:GetPlayingAnimationTracks()
+    	for i = 1,#Tracks do 
+    		local Track = Tracks[i] 
+    		if Track.Animation.AnimationId == ("rbxassetid://"..Id) then 
+    			Track:Stop()
+    		end
+    	end
+    end
+    
+    
+    local function RemoveGunAnimation(T)
+    	if EstimatedGunRanges[T.Name] then 
+    		stopAnim("889968874")
+    		stopAnim("229339207")
+    	end
+    end
+    
+    local function ColorBullet(T)
+        if T:IsA'Trail' then 
+    		T.Color = BulletColour
+    	end
+    end
+    
+    local HumanoidStateChanged;HumanoidStateChanged = LP.Character.Humanoid.StateChanged:Connect(StateChanged)
+    local RemoveGunAnimationEvent;RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
+    local ColourChangerEvent;ColourChangerEvent = LP.Character.DescendantAdded:Connect(ColorBullet)
+    
+    
+    LP.CharacterAdded:Connect(function(C)
+    	ToolTable = {}
+    	C:WaitForChild'Humanoid'
+    	-- Gun Animation Event -- 
+    	RemoveGunAnimationEvent:Disconnect()
+    	RemoveGunAnimationEvent = nil 
+    	RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
+    	-- No GroundHit Event -- 
+    	HumanoidStateChanged:Disconnect()
+    	HumanoidStateChanged = nil 
+    	HumanoidStateChanged = C.Humanoid.StateChanged:Connect(StateChanged)
+    	-- Colour Changer Event -- 
+    	ColourChangerEvent:Disconnect()
+    	ColourChangerEvent = nil
+    	ColourChangerEvent = C.DescendantAdded:Connect(ColourChanger)
+    end)
+    
+    
+    game:GetService("UserInputService").InputBegan:connect(ShootGlocks)
+    game:GetService("UserInputService").InputEnded:connect(UnShootGlocks)
+    game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
+    game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
+    game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
+    game:GetService("UserInputService").InputEnded:connect(RespawnListen)
+    game:GetService("UserInputService").InputEnded:connect(TriggerBot)
+    
+    
+    function SelectTarget(T)
+        if Selecting == true then
+            if mouse.Target then
+                if mouse.Target.Parent:IsA("Model") and game.Players:FindFirstChild(mouse.Target.Parent.Name) then
+                    Target.Text = mouse.Target.Parent.Name
+                    targetee = game.Players:FindFirstChild(mouse.Target.Parent.Name)
+                    getgenv().curTarget = targetee
+                end
+            end
+        end
+        coroutine.wrap(function()
+            repeat
+                wait()
+            until getgenv().curTarget ~= nil
+            TargetHighlight.Adornee = getgenv().curTarget.Character
+        end)()
+        if Flying then
+            Fly()
+        end
+        if CamLocking and CamlockPlayer and CamlockPlayer.Character and CamlockPlayer.Character:FindFirstChild'Head' then
+            if CamlockPlayer.Character:FindFirstChildOfClass'Humanoid' and CamlockPlayer.Character.Humanoid.Health == 0 then return end 
+            if CamlockPlayer.Character:FindFirstChild(CamlockTarget) then
+                workspace.CurrentCamera.CoordinateFrame = CFrame.new(workspace.CurrentCamera.CoordinateFrame.p,CamlockPlayer.Character[CamlockTarget].CFrame.p)
+            else 
+                workspace.CurrentCamera.CoordinateFrame = CFrame.new(workspace.CurrentCamera.CoordinateFrame.p,CamlockPlayer.Character.Head.CFrame.p)
+            end 
+        end
+        if TriggerBotTog then
+            wait(0.12)
+    		fireat(getgenv().curTarget)
+        end
+    end
+    
+    game:GetService("RunService").Stepped:connect(SelectTarget)
+    
+    function deathReturn()
         local plr = game.Players.LocalPlayer
         local pos = plr.Character.HumanoidRootPart.CFrame
+        local hur = plr.Character.HumanoidRootPart
         plr.Character.Humanoid.Health = 0
         wait(0.1)
         plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
@@ -230,231 +422,68 @@ function RespawnListen(inputObject, gameProcessedEvent)
         
         plr.Character.HumanoidRootPart.CFrame = pos
         
-        Notify("Cocksex v2", "Player successfully reset!",5)
+        Notify("Cocksex v2", "Player successfully returned!",5)
     end
-end
-local function HasItem(Player,Item)
-	if Player then 
-		local ItemFound = Player.Character:FindFirstChild(Item,true) or Player.Backpack:FindFirstChild(Item,true)
-		return ItemFound and "Yes" or "No" 
-	end 
-end
-local function AimbotToCFrame()
-    local CFrameToReturn;
-    local AimlockTarget = getgenv().curTarget
-    local TargetPart = AimlockTarget.FindFirstChild(AimlockTarget,'RealHumanoidRootPart') or AimlockTarget.FindFirstChild(AimlockTarget,'Torso')
-	CFrameToReturn = (TargetPart.CFrame + TargetPart.Velocity / (PlayersPing < 0.26 and 5 or 7.5)) + (TargetPart.RotVelocity / (PlayersPing < 0.26 and 5 or 7.5))
-	return CFrameToReturn
-end
-local TriggerBotTog = false
-function TriggerBot(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.V and gameProcessedEvent == false then
-        TriggerBotTog = not TriggerBotTog
-        Notify("Cocksex v2", "TriggerBot: "..tostring(TriggerBotTog),5)
-    end
-end
-local ragdollTog = false
-function AntiRagdoll(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.H and gameProcessedEvent == false then
-        ragdollTog = not ragdollTog
-        Notify("Cocksex v2", "No-Groundhit: "..tostring(ragdollTog),5)
-    end
-end
-
-local LP = game:GetService("Players").LocalPlayer
-
-local function StateChanged(Old,New)
-	if ragdollTog then 
-		if New == Enum.HumanoidStateType.FallingDown or New == Enum.HumanoidStateType.PlatformStanding then
-			plr.Character.Humanoid.PlatformStand = false
-			plr.Character.Humanoid:ChangeState(8)
-		end
-	end 
-end
-
-local function stopAnim(Id)
-    repeat
-        wait()
-    until plr.Character:FindFirstChild("Humanoid")
-	local Tracks = plr.Character.Humanoid:GetPlayingAnimationTracks()
-	for i = 1,#Tracks do 
-		local Track = Tracks[i] 
-		if Track.Animation.AnimationId == ("rbxassetid://"..Id) then 
-			Track:Stop()
-		end
-	end
-end
-
-
-local function RemoveGunAnimation(T)
-	if EstimatedGunRanges[T.Name] then 
-		stopAnim("889968874")
-		stopAnim("229339207")
-	end
-end
-
-local function ColorBullet(T)
-    if T:IsA'Trail' then 
-		T.Color = BulletColour
-	end
-end
-
-local HumanoidStateChanged;HumanoidStateChanged = LP.Character.Humanoid.StateChanged:Connect(StateChanged)
-local RemoveGunAnimationEvent;RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
-local ColourChangerEvent;ColourChangerEvent = LP.Character.DescendantAdded:Connect(ColorBullet)
-
-
-LP.CharacterAdded:Connect(function(C)
-	ToolTable = {}
-	C:WaitForChild'Humanoid'
-	-- Gun Animation Event -- 
-	RemoveGunAnimationEvent:Disconnect()
-	RemoveGunAnimationEvent = nil 
-	RemoveGunAnimationEvent = LP.Character.DescendantRemoving:Connect(RemoveGunAnimation)
-	-- No GroundHit Event -- 
-	HumanoidStateChanged:Disconnect()
-	HumanoidStateChanged = nil 
-	HumanoidStateChanged = C.Humanoid.StateChanged:Connect(StateChanged)
-	-- Colour Changer Event -- 
-	ColourChangerEvent:Disconnect()
-	ColourChangerEvent = nil
-	ColourChangerEvent = C.DescendantAdded:Connect(ColourChanger)
-end)
-
-
-game:GetService("UserInputService").InputBegan:connect(ShootGlocks)
-game:GetService("UserInputService").InputEnded:connect(UnShootGlocks)
-game:GetService("UserInputService").InputBegan:connect(CtrlSelect)
-game:GetService("UserInputService").InputEnded:connect(UnCtrlSelect)
-game:GetService("UserInputService").InputEnded:connect(AntiRagdoll)
-game:GetService("UserInputService").InputEnded:connect(RespawnListen)
-game:GetService("UserInputService").InputEnded:connect(TriggerBot)
-
-
-function SelectTarget(T)
-    if Selecting == true then
-        if mouse.Target then
-            if mouse.Target.Parent:IsA("Model") and game.Players:FindFirstChild(mouse.Target.Parent.Name) then
-                Target.Text = mouse.Target.Parent.Name
-                targetee = game.Players:FindFirstChild(mouse.Target.Parent.Name)
-                getgenv().curTarget = targetee
-            end
-        end
-    end
+    
     coroutine.wrap(function()
-        repeat
-            wait()
-        until getgenv().curTarget ~= nil
-        TargetHighlight.Adornee = getgenv().curTarget.Character
-    end)()
-    if Flying then
-        Fly()
-    end
-    if CamLocking and CamlockPlayer and CamlockPlayer.Character and CamlockPlayer.Character:FindFirstChild'Head' then
-        if CamlockPlayer.Character:FindFirstChildOfClass'Humanoid' and CamlockPlayer.Character.Humanoid.Health == 0 then return end 
-        if CamlockPlayer.Character:FindFirstChild(CamlockTarget) then
-            workspace.CurrentCamera.CoordinateFrame = CFrame.new(workspace.CurrentCamera.CoordinateFrame.p,CamlockPlayer.Character[CamlockTarget].CFrame.p)
-        else 
-            workspace.CurrentCamera.CoordinateFrame = CFrame.new(workspace.CurrentCamera.CoordinateFrame.p,CamlockPlayer.Character.Head.CFrame.p)
-        end 
-    end
-    if TriggerBotTog then
-        wait(0.12)
-		fireat(getgenv().curTarget)
-    end
-end
-
-game:GetService("RunService").Stepped:connect(SelectTarget)
-
-function deathReturn()
-    local plr = game.Players.LocalPlayer
-    local pos = plr.Character.HumanoidRootPart.CFrame
-    local hur = plr.Character.HumanoidRootPart
-    plr.Character.Humanoid.Health = 0
-    wait(0.1)
-    plr.Character.Head.CFrame = CFrame.new(1000000,0,1000000)
-    plr.Character.HumanoidRootPart:Destroy()
-    plr.Character:Destroy()
-    local M = Instance.new('Model', workspace) M.Name = 'respawn_iy'
-    local H = Instance.new('Humanoid', M)
-    local T = Instance.new('Part', M) T.Name = 'Torso' T.CanCollide = false T.Transparency = 1
-    plr.Character = M
-    M:Destroy()
-    H:Destroy()
-    T:Destroy()
-    for i,v in pairs(workspace:GetChildren()) do
-        if v.Name == 'respawn_iy' then
-            v:Destroy()
-        end
-    end
-    wait()
-    repeat 
-        wait()
-    until plr.Character:FindFirstChild("HumanoidRootPart")
-    
-    plr.Character.HumanoidRootPart.CFrame = pos
-    
-    Notify("Cocksex v2", "Player successfully returned!",5)
-end
-
-coroutine.wrap(function()
-    while wait() do
-        if game.Players.LocalPlayer.Character.Humanoid.Health == 0 then
-            deathReturn()
-        end
-    end
-end)()
-
-local function hvh(Target)
-    hvhing = not hvhing
-    if hvhing then
-        local T = Target or getgenv().curTarget or nil
-
-        if T == nil then
-            Notify("Cocksex v2", "No target specified", 5)
-        else
-            Notify("Cocksex v2", "Hvh enabled and targeting "..T.Name, 5)
-        end
-
-        -- teleport
-        local targetPos = Target.Character.HumanoidRootPart.CFrame
-        local myPos = plr.Character.HumanoidRootPart.CFrame
-        myPos = targetPos
-
-
-        -- camlock
-        CamlockPlayer = Target
-        CamLocking = true
-
-        -- fly
-        local function Fly()
-            local Character = GetChar()
-            local Torso = Character:FindFirstChild'Torso'
-            if not Torso then return end
-            local BodyGyro,BodyVelocity = Instance.new('BodyGyro',Torso),Instance.new('BodyVelocity',Torso)
-            BodyGyro.P = 9e9
-            BodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
-            BodyGyro.CFrame = Torso.CFrame
-            BodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
-            BodyVelocity.Velocity = Vector3.new(0,0.1,0)
-            BodyVelocity.Name = "CyAdminFly"
-            local Table1 = {['W'] = 0;['A'] = 0;['S'] = 0;['D'] = 0;}
-            while Flying and Character:FindFirstChild'Humanoid' and Character.Humanoid.Health > 0 and wait() do 
-                if KeyTable['W'] then Table1['W'] = FlySpeed else Table1['W'] = 0 end 
-                if KeyTable['A'] then Table1['A'] = -FlySpeed else Table1['A'] = 0 end 
-                if KeyTable['S'] then Table1['S'] = -FlySpeed else Table1['S'] = 0 end 
-                if KeyTable['D'] then Table1['D'] = FlySpeed else Table1['D'] = 0 end 
-                if (Table1['W'] + Table1['S']) ~= 0 or (Table1['A'] + Table1['D']) ~= 0 then
-                    BodyVelocity.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (Table1['W'] + Table1['S'])) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(Table1['A'] + Table1['D'], (Table1['W'] + Table1['S']) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * 50
-                else
-                    BodyVelocity.Velocity = Vector3.new(0,0.1,0)
-                end
-                BodyGyro.CFrame = workspace.CurrentCamera.CoordinateFrame
+        while wait() do
+            if game.Players.LocalPlayer.Character.Humanoid.Health == 0 then
+                deathReturn()
             end
-            BodyGyro:Destroy()
-            BodyVelocity:Destroy()
         end
-    else
-        CamLocking = false
-    end
+    end)()
+    
+    local function hvh(Target)
+        hvhing = not hvhing
+        if hvhing then
+            local T = Target or getgenv().curTarget or nil
+    
+            if T == nil then
+                Notify("Cocksex v2", "No target specified", 5)
+            else
+                Notify("Cocksex v2", "Hvh enabled and targeting "..T.Name, 5)
+            end
+    
+            -- teleport
+            local targetPos = Target.Character.HumanoidRootPart.CFrame
+            local myPos = plr.Character.HumanoidRootPart.CFrame
+            myPos = targetPos
+    
+    
+            -- camlock
+            CamlockPlayer = Target
+            CamLocking = true
+    
+            -- fly
+            local function Fly()
+                local Character = GetChar()
+                local Torso = Character:FindFirstChild'Torso'
+                if not Torso then return end
+                local BodyGyro,BodyVelocity = Instance.new('BodyGyro',Torso),Instance.new('BodyVelocity',Torso)
+                BodyGyro.P = 9e9
+                BodyGyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
+                BodyGyro.CFrame = Torso.CFrame
+                BodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
+                BodyVelocity.Velocity = Vector3.new(0,0.1,0)
+                BodyVelocity.Name = "CyAdminFly"
+                local Table1 = {['W'] = 0;['A'] = 0;['S'] = 0;['D'] = 0;}
+                while Flying and Character:FindFirstChild'Humanoid' and Character.Humanoid.Health > 0 and wait() do 
+                    if KeyTable['W'] then Table1['W'] = FlySpeed else Table1['W'] = 0 end 
+                    if KeyTable['A'] then Table1['A'] = -FlySpeed else Table1['A'] = 0 end 
+                    if KeyTable['S'] then Table1['S'] = -FlySpeed else Table1['S'] = 0 end 
+                    if KeyTable['D'] then Table1['D'] = FlySpeed else Table1['D'] = 0 end 
+                    if (Table1['W'] + Table1['S']) ~= 0 or (Table1['A'] + Table1['D']) ~= 0 then
+                        BodyVelocity.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (Table1['W'] + Table1['S'])) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(Table1['A'] + Table1['D'], (Table1['W'] + Table1['S']) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * 50
+                    else
+                        BodyVelocity.Velocity = Vector3.new(0,0.1,0)
+                    end
+                    BodyGyro.CFrame = workspace.CurrentCamera.CoordinateFrame
+                end
+                BodyGyro:Destroy()
+                BodyVelocity:Destroy()
+            end
+        else
+            CamLocking = false
+        end
+    end 
 end
