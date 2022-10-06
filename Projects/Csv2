@@ -2,13 +2,21 @@
 
 local Settings={}
 
-Settings['binds'] = {
-    ["Shoot"] = "E",
-    ["TriggerBot"] = "V",
-    ["Lock"] = "F",
-    ["NoGroundhit"] = "H",
-    ["Respawn"] = "R"
-}
+if ... ~= nil then
+    Settings['preset'] = ...
+end
+
+if type(Settings['preset']) == "table" and Settings['preset']['Shoot'] ~= nil and Settings['preset']['TriggerBot'] ~= nil and Settings['preset']['NoGroundhit'] ~= nil and Settings['preset']['Respawn'] ~= nil then
+    Settings['binds'] = Settings['preset']
+else
+    Settings['binds'] = {
+        ["Shoot"] = "E",
+        ["TriggerBot"] = "V",
+        ["Lock"] = "F",
+        ["NoGroundhit"] = "H",
+        ["Respawn"] = "R"
+    }
+end
 
 -- Init
 
