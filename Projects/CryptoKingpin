@@ -44,7 +44,7 @@ local Window = Rayfield:CreateWindow({
 --///////////////////////////////////////////////////////////////////////
 
 local RunService = game:GetService("RunService")
-local Notifications = game:GetService("Players").DanDamielMhm:WaitForChild("PlayerGui").NewUi.Notifications
+local Notifications = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui").NewUi.Notifications
 local CodeProx = game.Workspace.Codes:FindFirstChild("ProximityPrompt",true)
 local CodesFolder = game.Workspace:FindFirstChild("Code")
 local ShopsFolder = game:GetService("Workspace").Shops
@@ -69,7 +69,7 @@ local AClaimCrystals = false
 local WhichAE = "Bitcoin"
 local AExchange = false
 local ExchangeRate = 4500
-local cRate = game:GetService("Players").DanDamielMhm.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
+local cRate = game:GetService("Players").LocalPlayer.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
 local ceRate = cRate:sub(8,#cRate - 5)
 local CurERate = ""
 local SpoofGp = false
@@ -141,20 +141,20 @@ local init = coroutine.wrap(function()
         
         if WhichAE == "Bitcoin" then
             CurERate:Set("Current Exchange Rate: "..math.floor(game:GetService("ReplicatedStorage").BtcVal.Value * 100) / 100 .." per "..WhichAE,1)
-            TotalE:Set("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value).." "..WhichAE,1)
-            CurE:Set("Current Profit: "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value).." Cash",1)
-            local projProff = game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * ExchangeRate
-            if projProff < game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value then
-                projProff = game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value
+            TotalE:Set("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value).." "..WhichAE,1)
+            CurE:Set("Current Profit: "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value).." Cash",1)
+            local projProff = game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * ExchangeRate
+            if projProff < game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value then
+                projProff = game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value
             end
             ProjE:Set("Projected Profit: "..formatLargeNumber(projProff).." sCash",1)
         else
             CurERate:Set("Current Exchange Rate: "..math.floor(game:GetService("ReplicatedStorage").SolVal.Value * 100) / 100 .." per "..WhichAE,1)
-            TotalE:Set("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.Solaris.Value).." "..WhichAE,1)
-            CurE:Set("Current Profit: "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value).." sCash",1)
-            local projProff = game:GetService("Players").DanDamielMhm.leaderstats.Solaris.Value * ExchangeRate
-            if projProff < game:GetService("Players").DanDamielMhm.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value then
-                projProff = game:GetService("Players").DanDamielMhm.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value
+            TotalE:Set("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.Solaris.Value).." "..WhichAE,1)
+            CurE:Set("Current Profit: "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value).." sCash",1)
+            local projProff = game:GetService("Players").LocalPlayer.leaderstats.Solaris.Value * ExchangeRate
+            if projProff < game:GetService("Players").LocalPlayer.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value then
+                projProff = game:GetService("Players").LocalPlayer.leaderstats.Solaris.Value * game:GetService("ReplicatedStorage").SolVal.Value
             end
             ProjE:Set("Projected Profit: "..formatLargeNumber(projProff).." sCash",1)
         end
@@ -162,20 +162,20 @@ local init = coroutine.wrap(function()
          
         if AExchange then
             if WhichAE == "Solaris" then
-                for i,v in pairs(getconnections(game:GetService("Players").DanDamielMhm.PlayerGui.NewUi.ExchangeUI.TopBar.Sol.Activated)) do
+                for i,v in pairs(getconnections(game:GetService("Players").LocalPlayer.PlayerGui.NewUi.ExchangeUI.TopBar.Sol.Activated)) do
                    v:Fire()
                 end
-                local rate = game:GetService("Players").DanDamielMhm.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
+                local rate = game:GetService("Players").LocalPlayer.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
                 local eRate = rate:sub(8,#rate - 5)
                 
                 if tonumber(eRate) >= ExchangeRate then
                     game:GetService("ReplicatedStorage").Events.ExchangeMoney:FireServer(false)
                 end
             elseif  WhichAE == "Bitcoin" then
-                for i,v in pairs(getconnections(game:GetService("Players").DanDamielMhm.PlayerGui.NewUi.ExchangeUI.TopBar.Bit.Activated)) do
+                for i,v in pairs(getconnections(game:GetService("Players").LocalPlayer.PlayerGui.NewUi.ExchangeUI.TopBar.Bit.Activated)) do
                    v:Fire()
                 end
-                local rate = game:GetService("Players").DanDamielMhm.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
+                local rate = game:GetService("Players").LocalPlayer.PlayerGui.NewUi.ExchangeUI.Values.Rate.Text
                 local eRate = rate:sub(8,#rate - 5)
                 
                 if tonumber(eRate) >= ExchangeRate then
@@ -386,9 +386,9 @@ local ExchangeRateSlider = GameTab:CreateSlider({
 })
 
 CurERate = GameTab:CreateLabel("Current Exchange Rate: "..tonumber(ceRate).." per "..WhichAE)
-TotalE = GameTab:CreateLabel("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value)..WhichAE)
-CurE = GameTab:CreateLabel("Current Profit: "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value).." (s)Cash")
-ProjE = GameTab:CreateLabel("Projected Profit: "..formatLargeNumber(game:GetService("Players").DanDamielMhm.leaderstats.BitCoins.Value * tonumber(ExchangeRate)).." (s)Cash")
+TotalE = GameTab:CreateLabel("Total "..WhichAE..": "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value)..WhichAE)
+CurE = GameTab:CreateLabel("Current Profit: "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * game:GetService("ReplicatedStorage").BtcVal.Value).." (s)Cash")
+ProjE = GameTab:CreateLabel("Projected Profit: "..formatLargeNumber(game:GetService("Players").LocalPlayer.leaderstats.BitCoins.Value * tonumber(ExchangeRate)).." (s)Cash")
 
 local Section = GameTab:CreateSection("Automation")
 
