@@ -1,0 +1,346 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Xv3nm/lua-rblx-repo/main/pepsiuilib"))()
+local alive = library.subs.Wait
+
+local PepsisWorld = library:CreateWindow({
+	Name = "Sass UI",
+	Themeable = {
+		Info = "Code by Totem#0001"
+	}
+})
+
+local GeneralTab = PepsisWorld:CreateTab({Name = "General"})
+local FarmingSection = GeneralTab:CreateSection({Name = "Farming"})
+
+FarmingSection:AddToggle({
+	Name = "Autofarm",
+	Value = false,
+	Flag = "FarmingSection_Autofarm"
+})
+
+FarmingSection:AddToggle({
+	Name = "Autosell",
+	Value = false,
+	Flag = "FarmingSection_Autosell"
+})
+
+FarmingSection:AddToggle({
+	Name = "Autobuy",
+	Value = false,
+	Flag = "FarmingSection_Autobuy"
+})
+
+local EnemyDrop = FarmingSection:AddDropdown({
+    List = {"Common","Rare","Epic","Legendary","Mythical"},
+    Multi = true,
+    Nothing = "Select Enemies",
+    Name = "Enemy Selection",
+    Flag = "FarmingSection_EnemySelection",
+    AllowDuplicateCalls = false
+})
+
+BuyDrop = FarmingSection:AddDropdown({
+    List = {"Common","Rare","Epic","Legendary","Mythical"},
+    Multi = true,
+    Nothing = "Select Enemies",
+    Name = "Buy Selection",
+    Flag = "FarmingSection_BuySelection",
+    AllowDuplicateCalls = false
+})
+
+local TeleportsSection = GeneralTab:CreateSection({Name = "Teleports"})
+
+TeleportsSection:AddButton({
+    Name = "Show Teleport Menu",
+    Callback = function()
+        game:GetService("ReplicatedStorage").ClientEvent.FrameScreenEvent:Fire("ShowFrameByName", "TeleportFrame")
+    end
+})
+
+local TeleportDrop = TeleportsSection:AddDropdown({
+    List = {"One Piece","Demon Slayer","Naruto","Dragon Ball","Attack on Titan", "Fairy Tail", "My Hero Academia", "Tokyo Ghoul", "Bleach", "HxH"},
+    Multi = false,
+    Name = "Teleports Selection",
+    Flag = "TeleportsSection_TeleportSelection",
+    Callback = function(Selection)
+        local Bank = {
+            ["One Piece"] = "OnePiece",
+            ["Demon Slayer"] = "DemonSlayer",
+            ["Naruto"] = "Naruto",
+            ["Dragon Ball"] = "DragonBall",
+            ["HxH"] = "HxH",
+            ["My Hero Academia"] = "MHA",
+            ["Fairy Tail"] = "FairyTail",
+            ["Bleach"] = "Bleach",
+            ["Tokyo Ghoul"] = "TokyoGhoul",
+            ["Attack on Titan"] = "AOT"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("TeleportNewArea",Bank[Selection])
+    end
+})
+
+TeleportsSection:AddLabel({Name = "Area must be unlocked!"})
+
+local FunSection = GeneralTab:CreateSection({Name = "Cosmetics"})
+
+FunSection:AddDropdown({
+    List = {"Self","Zoro","Saitama","Piccolo","Kyojuro","Kakashi", "Gogeta", "Eren", "Uraraka", "Kanaki", "Ichigo", "Gon", "JoJo?", "TrueShadowGod (DevSkin?)"},
+    Multi = false,
+    Name = "Select Skin",
+    Flag = "FunSection_SkinSelection",
+    Callback = function(Skin)
+        local Bank = {
+            ["Gon"] = "HxH001",
+            ["Saitama"] = "Saitama001",
+            ["Piccolo"] = "DragonBall005",
+            ["Zoro"] = "OnePiece002",
+            ["Self"] = "DefaultSkin",
+            ["Kyojuro"] = "DemonSlayer001",
+            ["Kakashi"] = "Naruto001",
+            ["Gogeta"] = "DragonBall001",
+            ["Eren"] = "AOT001",
+            ["Uraraka"] = "MyHeroAcademia001",
+            ["Kanaki"] = "TokyoGhoul001",
+            ["Ichigo"] = "Bleach001",
+            ["Saber"] = "FairyTail001",
+            ["JoJo?"] = "JoJo002",
+            ["TrueShadowGod (DevSkin?)"] = "TrueShadowGod"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("EquipSkin",Bank[Skin])
+    end
+})
+
+local MonsterSection = GeneralTab:CreateSection({Name = "Monsters",Side = "Right"})
+
+MonsterSection:AddToggle({
+    Name = "Auto Equip Best",
+    Value = false,
+    Flag = "MonsterSection_AutoEquipBest"
+})
+
+MonsterSection:AddToggle({
+    Name = "Auto Merge",
+    Value = false,
+    Flag = "MonsterSection_AutoMerge"
+})
+
+MonsterSection:AddSlider({
+    Name = "Auto Merge Probability",
+    Value = 5,
+    Min = 2,
+    Max = 5,
+    Flag = "MonsterSection_MergeProbability",
+    Format = function(Value)
+        return "Auto Merge Probability: "..tostring(Value*20).."%"
+    end
+})
+
+local MiscSection = GeneralTab:CreateSection({Name = "Misc",Side = "Right"})
+
+MiscSection:AddToggle({
+	Name = "Teleport Gamepass",
+	Value = false,
+	Flag = "MiscSection_TeleportGamepass",
+	Callback = function(Value)
+        game:GetService("Players").LocalPlayer.ServerPlayerData.IsTeleport.Value = Value
+	end
+})
+
+MiscSection:AddToggle({
+	Name = "Luck Gamepass",
+	Value = false,
+	Flag = "MiscSection_LuckGamepass",
+	Callback = function()
+	    game:GetService("Players").DanDamielMhm.ServerPlayerData.IsLucky.Value = Value
+	end
+})
+
+coroutine.wrap(function()
+    local success, ErrorStatement = pcall(function()
+        while alive() and wait() do
+            if library.flags["FarmingSection_Autofarm"] then
+                local Player = game:GetService("Players").LocalPlayer
+                local Monsters = workspace.Monsters
+                local FollowModels = workspace.FollowModels:FindFirstChild('FollowModels_' .. Player.UserId)
+                local MonsterRemote = game.ReplicatedStorage.RemoteEvents.MonsterRemote
+                local PlayerAreaData = game:GetService("Players").DanDamielMhm.ServerPlayerData.PlayerAreaData.Value
+                local UnformattedData = string.split(PlayerAreaData,",")[1]
+                UnformattedData = string.split(UnformattedData,":")[2]
+                local CurrentAreaName = UnformattedData:sub(2,#UnformattedData-1)
+                
+                for i,v in next, Monsters:GetChildren() do
+                    if v:IsA('Model') then
+                        for i,v in next, v:GetChildren() do
+                            wait()
+                            if not library.flags["FarmingSection_Autofarm"] then break end
+                            if v:IsA('Model') and v.Name:find('MonsterModel') and v:FindFirstChild('RootPart') and v.Parent.Name == CurrentAreaName and table.find(library.flags["FarmingSection_EnemySelection"], v.RootPart.MonsterBillboardAtt.MonsterBillboard.QualityLabel.Text) and v.MonsterHp.Value > 0 then
+                                if not library.flags["FarmingSection_Autofarm"] then break end
+                                while v.MonsterHp.Value > 0 and alive() and wait() do
+                                    for _,child in ipairs(FollowModels:GetChildren()) do
+                                        local humanoidRootPart = child:FindFirstChild("HumanoidRootPart")
+                                        if humanoidRootPart then
+                                            humanoidRootPart.CFrame = Player.Character.HumanoidRootPart.CFrame
+                                        end
+                                    end
+                                    
+                                    if not library.flags["FarmingSection_Autofarm"] then break end
+                                    Player.Character.HumanoidRootPart.CFrame = v.RootPart.CFrame
+                                    for i2,v2 in next, FollowModels:GetChildren() do
+                                        MonsterRemote:FireServer("AttackMonsterByFollow", v, v2)
+                                    end
+                                end
+                            end
+                            
+                            
+                            if library.flags["FarmingSection_Autosell"] then
+                                local Player = game:GetService("Players").LocalPlayer
+                                local Char = Player.Character
+                                local HRP = Char.HumanoidRootPart
+                                local Monsters = workspace.Monsters
+                                for i,v in next, Monsters:GetChildren() do
+                                    if v:IsA('Model') then
+                                        for i,v in next, v:GetChildren() do
+                                            if v:IsA('Model') and v.Name:find('MonsterModel') and v:FindFirstChild('RootPart') and v.MonsterHp.Value == 0 then
+                                                if not table.find(library.flags["FarmingSection_BuySelection"], v.RootPart.MonsterBillboardAtt.MonsterBillboard.QualityLabel.Text) and library.flags["FarmingSection_Autobuy"] then
+                                                    if (v.RootPart.Position - HRP.Position).Magnitude <= 500 then
+                                                        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("MonsterRemote"):FireServer("SellMonster",v,false)
+                                                        for i,v in pairs(Player.PlayerGui.BuyRoleBillboardScreen:GetChildren()) do
+                                                            v.Enabled = false
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                            if library.flags["FarmingSection_Autobuy"] then
+                                local Player = game:GetService("Players").LocalPlayer
+                                local Char = Player.Character
+                                local HRP = Char.HumanoidRootPart
+                                local Monsters = workspace.Monsters
+                                for i,v in next, Monsters:GetChildren() do
+                                    if v:IsA('Model') then
+                                        for i,v in next, v:GetChildren() do
+                                            if v:IsA('Model') and v.Name:find('MonsterModel') and v:FindFirstChild('RootPart') and v.MonsterHp.Value == 0 then
+                                                if table.find(library.flags["FarmingSection_BuySelection"], v.RootPart.MonsterBillboardAtt.MonsterBillboard.QualityLabel.Text) and library.flags["FarmingSection_Autobuy"] then
+                                                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("MonsterRemote"):FireServer("BuyRoleByMoney",v,"CoinNum")
+                                                    for i,v in pairs(Player.PlayerGui.BuyRoleBillboardScreen:GetChildren()) do
+                                                        v.Enabled = false
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait()
+                end
+            end
+            
+            if library.flags["FarmingSection_Autosell"] then
+                local Player = game:GetService("Players").LocalPlayer
+                local Char = Player.Character
+                local HRP = Char.HumanoidRootPart
+                local Monsters = workspace.Monsters
+                for i,v in next, Monsters:GetChildren() do
+                    if v:IsA('Model') then
+                        for i,v in next, v:GetChildren() do
+                            if v:IsA('Model') and v.Name:find('MonsterModel') and v:FindFirstChild('RootPart') and v.MonsterHp.Value == 0 then
+                                if not table.find(library.flags["FarmingSection_BuySelection"], v.RootPart.MonsterBillboardAtt.MonsterBillboard.QualityLabel.Text) and library.flags["FarmingSection_Autobuy"] then
+                                    if (v.RootPart.Position - HRP.Position).Magnitude <= 500 then
+                                        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("MonsterRemote"):FireServer("SellMonster",v,false)
+                                        for i,v in pairs(Player.PlayerGui.BuyRoleBillboardScreen:GetChildren()) do
+                                            v.Enabled = false
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if library.flags["FarmingSection_Autobuy"] then
+                local Player = game:GetService("Players").LocalPlayer
+                local Char = Player.Character
+                local HRP = Char.HumanoidRootPart
+                local Monsters = workspace.Monsters
+                for i,v in next, Monsters:GetChildren() do
+                    if v:IsA('Model') then
+                        for i,v in next, v:GetChildren() do
+                            if v:IsA('Model') and v.Name:find('MonsterModel') and v:FindFirstChild('RootPart') and v.MonsterHp.Value == 0 then
+                                if table.find(library.flags["FarmingSection_BuySelection"], v.RootPart.MonsterBillboardAtt.MonsterBillboard.QualityLabel.Text) and library.flags["FarmingSection_Autobuy"] then
+                                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("MonsterRemote"):FireServer("BuyRoleByMoney",v,"CoinNum")
+                                    for i,v in pairs(Player.PlayerGui.BuyRoleBillboardScreen:GetChildren()) do
+                                        v.Enabled = false
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            if library.flags["MonsterSection_AutoEquipBest"] then
+                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("BestEquipRole")
+            end
+            
+            if library.flags["MonsterSection_AutoMerge"] then -- Why the fuck did this take 3 hours
+                local Participants = {}
+                local Probability_Limiter = (library.flags["MonsterSection_MergeProbability"] * 20) or 100
+                local Inventory = game:GetService("Players").DanDamielMhm.PlayerGui.FrameScreen.RoleBackpackFrame.BackpackFrame.ScrollingFrame
+                local Possible_Contestants = {}
+                local Color_Codes = {
+                    ["0.666667, 1, 0"] = "Normal",
+                    ["1, 1, 0"] = "Golden",
+                    ["0.333333, 0.666667, 1"] = "Rainbow"
+                }
+                local Probability = {}
+                for i,v in pairs(Inventory:GetChildren()) do
+                    if not v.EquipImg.Visible then
+                        table.insert(Possible_Contestants,tostring(v))
+                    end
+                end
+                table.sort(Possible_Contestants)
+                
+                for i,v in pairs(Possible_Contestants) do
+                    local char = v:sub(1,#v-3)
+                    local color;
+                    
+                    if Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)] then
+                        color = Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)]
+                    end
+                    
+                    char = char.."_"..color
+                
+                    if Probability[char] then
+                        Probability[char]["Chance"] = Probability[char]["Chance"] + 20
+                        table.insert(Probability[char]["Storage"],v)
+                    else
+                        Probability[char] = {}
+                        Probability[char]["Chance"] = 20
+                        Probability[char]["Color"] = color
+                        Probability[char]["Storage"] = {}
+                        table.insert(Probability[char]["Storage"],v)
+                    end
+                end
+                
+                for i,v in pairs(Probability) do
+                    if v["Chance"] >= Probability_Limiter then
+                        if v["Color"] == "Rainbow" then print("Cannot merge Rainbows") break end
+                        for i,v in pairs(v["Storage"]) do
+                            table.insert(Participants, v)
+                        end
+                        print("Merging "..v["Storage"][1]:sub(1,#v["Storage"][1]-3))
+                        local Limited_Participants = {}
+                        for i=1,5 do
+                            table.insert(Limited_Participants, Participants[i])
+                        end
+                        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("FusingRole", Limited_Participants)
+                        wait(1)
+                    end
+                end
+            end
+        end
+    end)
+end)()
