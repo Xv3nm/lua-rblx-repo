@@ -150,7 +150,7 @@ MiscSection:AddToggle({
 	Value = false,
 	Flag = "MiscSection_LuckGamepass",
 	Callback = function()
-	    game:GetService("Players").DanDamielMhm.ServerPlayerData.IsLucky.Value = Value
+	    game:GetService("Players").LocalPlayer.ServerPlayerData.IsLucky.Value = Value
 	end
 })
 
@@ -162,7 +162,7 @@ coroutine.wrap(function()
                 local Monsters = workspace.Monsters
                 local FollowModels = workspace.FollowModels:FindFirstChild('FollowModels_' .. Player.UserId)
                 local MonsterRemote = game.ReplicatedStorage.RemoteEvents.MonsterRemote
-                local PlayerAreaData = game:GetService("Players").DanDamielMhm.ServerPlayerData.PlayerAreaData.Value
+                local PlayerAreaData = game:GetService("Players").LocalPlayer.ServerPlayerData.PlayerAreaData.Value
                 local UnformattedData = string.split(PlayerAreaData,",")[1]
                 UnformattedData = string.split(UnformattedData,":")[2]
                 local CurrentAreaName = UnformattedData:sub(2,#UnformattedData-1)
@@ -288,7 +288,7 @@ coroutine.wrap(function()
             if library.flags["MonsterSection_AutoMerge"] then -- Why the fuck did this take 3 hours
                 local Participants = {}
                 local Probability_Limiter = (library.flags["MonsterSection_MergeProbability"] * 20) or 100
-                local Inventory = game:GetService("Players").DanDamielMhm.PlayerGui.FrameScreen.RoleBackpackFrame.BackpackFrame.ScrollingFrame
+                local Inventory = game:GetService("Players").LocalPlayer.PlayerGui.FrameScreen.RoleBackpackFrame.BackpackFrame.ScrollingFrame
                 local Possible_Contestants = {}
                 local Color_Codes = {
                     ["0.666667, 1, 0"] = "Normal",
