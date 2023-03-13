@@ -233,6 +233,66 @@ coroutine.wrap(function()
                                     end
                                 end
                             end
+                            if library.flags["MonsterSection_AutoEquipBest"] then
+                                game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("BestEquipRole")
+                            end
+                            if library.flags["MonsterSection_AutoMerge"] then -- Why the fuck did this take 3 hours
+                                local Participants = {}
+                                local Probability_Limiter = (library.flags["MonsterSection_MergeProbability"] * 20) or 100
+                                local Inventory = game:GetService("Players").LocalPlayer.PlayerGui.FrameScreen.RoleBackpackFrame.BackpackFrame.ScrollingFrame
+                                local Possible_Contestants = {}
+                                local Color_Codes = {
+                                    ["1, 1, 0"] = "Golden",
+                                    ["0.333333, 0.666667, 1"] = "Rainbow"
+                                }
+                                local Probability = {}
+                                for i,v in pairs(Inventory:GetChildren()) do
+                                    if not v.EquipImg.Visible then
+                                        table.insert(Possible_Contestants,tostring(v))
+                                    end
+                                end
+                                table.sort(Possible_Contestants)
+                                
+                                for i,v in pairs(Possible_Contestants) do
+                                    local char = v:sub(1,#v-3)
+                                    local color;
+                                    
+                                    if Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)] then
+                                        color = Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)]
+                                    elseif Inventory:FindFirstChild(v).UIGradient then
+                                        color = "Unmerged"
+                                    end
+                                    
+                                    char = char.."_"..color
+                                
+                                    if Probability[char] then
+                                        Probability[char]["Chance"] = Probability[char]["Chance"] + 20
+                                        table.insert(Probability[char]["Storage"],v)
+                                    else
+                                        Probability[char] = {}
+                                        Probability[char]["Chance"] = 20
+                                        Probability[char]["Color"] = color
+                                        Probability[char]["Storage"] = {}
+                                        table.insert(Probability[char]["Storage"],v)
+                                    end
+                                end
+                                
+                                for i,v in pairs(Probability) do
+                                    if v["Chance"] >= Probability_Limiter then
+                                        if v["Color"] == "Rainbow" then print("Cannot merge Rainbows") break end
+                                        for i,v in pairs(v["Storage"]) do
+                                            table.insert(Participants, v)
+                                        end
+                                        print("Merging "..v["Storage"][1]:sub(1,#v["Storage"][1]-3))
+                                        local Limited_Participants = {}
+                                        for i=1,5 do
+                                            table.insert(Limited_Participants, Participants[i])
+                                        end
+                                        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("FusingRole", Limited_Participants)
+                                        wait()
+                                    end
+                                end
+                            end
                         end
                     end
                     task.wait()
@@ -334,11 +394,11 @@ coroutine.wrap(function()
                         end
                         print("Merging "..v["Storage"][1]:sub(1,#v["Storage"][1]-3))
                         local Limited_Participants = {}
-                        for i=1,5 do
+                        for i=1,library.flags["MonsterSection_MergeProbability"] do
                             table.insert(Limited_Participants, Participants[i])
                         end
                         game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PlayerDataRemote"):FireServer("FusingRole", Limited_Participants)
-                        wait(1)
+                        wait()
                     end
                 end
             end
