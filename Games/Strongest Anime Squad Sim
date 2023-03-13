@@ -291,7 +291,6 @@ coroutine.wrap(function()
                 local Inventory = game:GetService("Players").LocalPlayer.PlayerGui.FrameScreen.RoleBackpackFrame.BackpackFrame.ScrollingFrame
                 local Possible_Contestants = {}
                 local Color_Codes = {
-                    ["0.666667, 1, 0"] = "Normal",
                     ["1, 1, 0"] = "Golden",
                     ["0.333333, 0.666667, 1"] = "Rainbow"
                 }
@@ -309,6 +308,8 @@ coroutine.wrap(function()
                     
                     if Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)] then
                         color = Color_Codes[tostring(Inventory:FindFirstChild(v).UIGradient.Color.Keypoints[1].Value)]
+                    elseif Inventory:FindFirstChild(v).UIGradient then
+                        color = "Unmerged"
                     end
                     
                     char = char.."_"..color
