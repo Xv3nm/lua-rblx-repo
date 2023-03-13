@@ -6114,6 +6114,9 @@ function library:CreateWindow(options, ...)
 					           end
 					           Nsstr = Nsstr:sub(1,22).."..."
 					       end
+					       if string.gsub(Nsstr," ","") == "" then
+					           Nsstr = blankstring or "Select Item(s)"
+					       end
 					       sstr = Nsstr
 					    end
 						dropdownSelection.Text = sstr
