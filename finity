@@ -443,7 +443,7 @@ local suc, err = pcall(function()
 			--- Sets the new keycode for the toggle of the gui
 			--- @param NewKey string
 			function self2:ChangeToggleKey(NewKey)
-				finityData.ToggleKey = "Enum.Keycode."..NewKey
+				finityData.ToggleKey = Enum.KeyCode[NewKey]
 
 				if finityData.UpConnection then
 					finityData.UpConnection:Disconnect()
@@ -459,7 +459,7 @@ local suc, err = pcall(function()
 
 						if toggled then
 
-							self2.Container.Active = true -- uncommented
+							self2.container.Active = true -- uncommented
 
 							pcall(self2.container.TweenPosition, self2.container, savedposition, "Out", "Sine", 0.5, true)
 						else
