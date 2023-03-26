@@ -283,27 +283,6 @@ end
 local suc, err = pcall(function()
 
 	if game.Loaded then
-
-		task.delay(1.5, function()
-
-			if not HubMode then
-				print([[
-
-					_____ ___ _   _ ___ _______   __
-					|  ___|_ _| \ | |_ _|_   _\ \ / /
-					| |_   | ||  \| || |  | |  \ V /
-					|  _|  | || |\  || |  | |   | |
-					|_|   |___|_| \_|___| |_|   |_|
-
-				]])
-
-				print("You are using Finity version "..Version)
-				print("")
-				print("If you want Help, Found a Bug with the GUI, Have a suggestion or Just enjoy Finity, Join our Discord Community: "..Discord.." :D")
-
-			end
-		end)
-
 		local mouse = finity.gs["Players"].LocalPlayer:GetMouse()
 
 		function finity:Create(class, properties)
