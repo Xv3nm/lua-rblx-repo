@@ -108,12 +108,8 @@ end
       AccentText = Color3.fromRGB(235, 235, 235)
   }
   --//
-  function library:Alive()
-    if alivewin then
-    	return true
-    else
-    	return false
-    end
+  function library:GetWindow()
+    return Window or Window.Main
   end
   
   function library:Window(WindowArgs)
