@@ -109,10 +109,10 @@ end
   }
   --//
   function library:Alive()
-    if Window ~= nil then
-      return true
+    if alivewin then
+    	return true
     else
-      return false
+    	return false
     end
   end
   
@@ -351,6 +351,8 @@ end
         })
     })
   end
+  
+  local alivewin = Window
 
   if syn.protect_gui then
     syn.protect_gui(Window)
