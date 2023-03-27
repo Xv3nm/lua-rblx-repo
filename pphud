@@ -108,9 +108,6 @@ end
       AccentText = Color3.fromRGB(235, 235, 235)
   }
   --//
-  function library:GetWindow()
-    return Window or Window.Main
-  end
   
   function library:Window(WindowArgs)
   WindowArgs.Text = WindowArgs.Text or "Window"
@@ -357,6 +354,10 @@ end
     Window.Parent = gethui()
   else
     Window.Parent = CoreGui
+  end
+  
+  function library:GetWindow()
+    return Window or Window.Main
   end
 
   local ResizeButton = Window.Main.Bottom.ResizeIcon.ResizeButton
