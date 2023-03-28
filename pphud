@@ -326,7 +326,7 @@ end
     consoleContainer.CanvasPosition = Vector2.new(0, scrollSize)
   end)
 
-  library["Self"] = Window
+  library["WindowTable"] = WindowTable
 
   local bottomText = Window.Main.Bottom.BottomText
 
@@ -1311,9 +1311,7 @@ end
   
   return TabTable
   end
-  
-  library["WindowTable"] = WindowTable
-  
+    
   return WindowTable
   end
   
