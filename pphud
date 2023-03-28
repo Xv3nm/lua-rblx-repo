@@ -1,8 +1,11 @@
-  local library = {
-    flags = {}
+local library = {
+    flags = {},
+    Debounce = {}
   }
   library.Flags = library.flags
-  library.Debouce = {}
+  
+  getgenv().PPHUDBokuLoaded = true
+  getgenv().PPHUDAllowed = false
   
   --// Dependences --//
   local CoreGui = game:GetService("CoreGui")
@@ -109,6 +112,30 @@ end
       AccentText = Color3.fromRGB(235, 235, 235)
   }
   --//
+  
+  function library:SetBind(bind)
+    if type(bind) == "userdata" then
+      getgenv().PPHUDToggleBind = bind
+    else
+      warn(tostring(bind).." is not a valid Enum KeyCode...\n Correct input example: Enum.KeyCode.LeftAlt.\n For more information lookup Roblox Enum KeyCodes!")
+    end
+  end
+  
+  function library:Alive()
+    return getgenv().PPHUDBokuLoaded or false
+  end
+  
+  function library:Destroy()
+    getgenv().PPHUDBokuLoaded = false
+  end
+  
+  function library:GetSelf()
+    if getgenv().PPHUDAllowed and getgenv().PPHUDBokuLoaded then
+        return game:GetService("CoreGui"):FindFirstChild("PPHUD")
+    else
+        return "Wait..."
+    end
+  end
   
   function library:Window(WindowArgs)
   WindowArgs.Text = WindowArgs.Text or "Window"
@@ -229,14 +256,7 @@ end
       })
   })
   
-  library.Window = Window or Window.Main
   
-  library.Debounce.HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-    local ToggleBind = getgenv().PPHUDToggleBind
-    if Input.KeyCode == ToggleBind and not GameProcessed then
-        Window.Main.Visible = not Window.Main.Visible
-    end
-  end)
 
   
 
@@ -298,6 +318,8 @@ end
     consoleContainer.CanvasPosition = Vector2.new(0, scrollSize)
   end)
 
+  library["Self"] = Window
+
   local bottomText = Window.Main.Bottom.BottomText
 
   bottomText.MouseEnter:Connect(function()
@@ -351,8 +373,6 @@ end
     })
   end
   
-  local alivewin = Window
-
   if syn.protect_gui then
     syn.protect_gui(Window)
     Window.Parent = CoreGui
@@ -362,17 +382,12 @@ end
     Window.Parent = CoreGui
   end
   
-  function library:SetBind(bind)
-    if type(bind) == "userdata" then
-      getgenv().PPHUDToggleBind = bind
-    else
-      warn(tostring(bind).." is not a valid Enum KeyCode...\n Correct input example: Enum.KeyCode.LeftAlt.\n For more information lookup Roblox Enum KeyCodes!")
+  library.Debounce["HideWindow"] = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+    local ToggleBind = getgenv().PPHUDToggleBind
+    if Input.KeyCode == ToggleBind and not GameProcessed then
+        Window.Main.Visible = not Window.Main.Visible
     end
-  end
-  
-  function library:Alive()
-    return getgenv().PPHUDBokuLoaded or false
-  end
+  end)
 
   local ResizeButton = Window.Main.Bottom.ResizeIcon.ResizeButton
   local TabContainer = Window.Main.Topbar.TabContainer
@@ -1293,17 +1308,27 @@ end
   end
   
   getgenv().PPHUDBokuLoaded = true
+  
   coroutine.wrap(function()
-    while wait() and getgenv().PPHUDBokuLoaded do
-      if not getgenv().PPHUDBokuLoaded then warn('PPHUD Unloaded'); break end
-      
-      if Window.Main == nil and not game:GetService("CoreGui"):FindFirstChild("PPHUD") or not library:Alive() then
-      	getgenv().PPHUDBokuLoaded = false
-	for i,v in pairs(library.Debounce) do
-	  v:Disconnect()
-	end
-      end
+    wait(1)
+    while wait() do
+        if game:GetService("CoreGui"):FindFirstChild("PPHUD") then
+            getgenv().PPHUDAllowed = true
+            if not getgenv().PPHUDBokuLoaded then
+              	getgenv().PPHUDBokuLoaded = false
+              	getgenv().PPHUDAllowed = false
+            	for i,v in pairs(library.Debounce) do
+            	  print(tostring(i.." disconnected..."))
+            	  v:Disconnect()
+            	end
+            	warn("PPHUD Unloaded")
+            	if game:GetService("CoreGui"):FindFirstChild("PPHUD") then
+            	    game:GetService("CoreGui"):FindFirstChild("PPHUD"):Destroy()
+            	end
+            	break
+            end
+        end
     end
   end)()
-
-  return library
+  
+return library;
