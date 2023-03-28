@@ -2,6 +2,7 @@
     flags = {}
   }
   library.Flags = library.flags
+  library.Debouce = {}
   
   --// Dependences --//
   local CoreGui = game:GetService("CoreGui")
@@ -230,7 +231,7 @@ end
   
   library.Window = Window or Window.Main
   
-  local HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+  library.Debounce.HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
     local ToggleBind = getgenv().PPHUDToggleBind
     if Input.KeyCode == ToggleBind and not GameProcessed then
         Window.Main.Visible = not Window.Main.Visible
@@ -1298,6 +1299,9 @@ end
       
       if Window.Main == nil and not game:GetService("CoreGui"):FindFirstChild("PPHUD") or not library:Alive() then
       	getgenv().PPHUDBokuLoaded = false
+	for i,v in pairs(library.Debounce) do
+	  v:Disconnect()
+	end
       end
     end
   end)()
