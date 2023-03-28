@@ -227,12 +227,15 @@ end
           })
       })
   })
-
-  UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-    if Input.KeyCode == Enum.KeyCode.LeftAlt and not GameProcessed then
+  
+  local HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
+    local ToggleBind = getgenv().PPHUDToggleBind
+    if Input.KeyCode == Enum.KeyCode[ToggleBind] and not GameProcessed then
         Window.Main.Visible = not Window.Main.Visible
     end
   end)
+
+  
 
   local Console = Utilities:Create("Frame", {
     Name = "Console",
@@ -354,6 +357,14 @@ end
     Window.Parent = gethui()
   else
     Window.Parent = CoreGui
+  end
+  
+  function library:SetBind(bind)
+    if type(bind) == "userdata" then
+      getgenv().PPHUDToggleBind = bind
+    else
+      warn(tostring(bind).." is not a valid Enum KeyCode...\n Correct input example: Enum.KeyCode.LeftAlt.\n For more information lookup Roblox Enum KeyCodes!")
+    end
   end
   
   function library:GetWindow()
