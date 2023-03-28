@@ -228,6 +228,8 @@ end
       })
   })
   
+  library.Window = Window or Window.Main
+  
   local HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
     local ToggleBind = getgenv().PPHUDToggleBind
     if Input.KeyCode == ToggleBind and not GameProcessed then
@@ -367,8 +369,8 @@ end
     end
   end
   
-  function library:GetWindow()
-    return Window or Window.Main
+  function library:Alive()
+    return getgenv().PPHUDBokuLoaded or false
   end
 
   local ResizeButton = Window.Main.Bottom.ResizeIcon.ResizeButton
@@ -1288,5 +1290,16 @@ end
   
   return WindowTable
   end
+  
+  getgenv().PPHUDBokuLoaded = true
+  coroutine.wrap(function()
+    while wait() and getgenv().PPHUDBokuLoaded do
+      if not getgenv().PPHUDBokuLoaded then warn('PPHUD Unloaded'); break end
+      
+      if Window.Main == nil and not game:GetService("CoreGui"):FindFirstChild("PPHUD") or not library:Alive() then
+      	getgenv().PPHUDBokuLoaded = false
+      end
+    end
+  end)()
 
   return library
