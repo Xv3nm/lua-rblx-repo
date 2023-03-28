@@ -230,7 +230,7 @@ end
   
   local HideWindow = UserInputService.InputBegan:Connect(function(Input, GameProcessed)
     local ToggleBind = getgenv().PPHUDToggleBind
-    if Input.KeyCode == Enum.KeyCode[ToggleBind] and not GameProcessed then
+    if Input.KeyCode == ToggleBind and not GameProcessed then
         Window.Main.Visible = not Window.Main.Visible
     end
   end)
