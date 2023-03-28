@@ -1312,6 +1312,8 @@ end
   return TabTable
   end
   
+  library["WindowTable"] = WindowTable
+  
   return WindowTable
   end
   
