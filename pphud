@@ -122,11 +122,19 @@ end
   end
   
   function library:Alive()
-    return getgenv().PPHUDBokuLoaded or false
+    if getgenv().PPHUDAllowed then
+        return getgenv().PPHUDBokuLoaded or false
+    else
+        return "Wait..."
+    end
   end
   
   function library:Destroy()
-    getgenv().PPHUDBokuLoaded = false
+    if getgenv().PPHUDAllowed then
+        getgenv().PPHUDBokuLoaded = false
+    else
+        return "Wait..."
+    end
   end
   
   function library:GetSelf()
